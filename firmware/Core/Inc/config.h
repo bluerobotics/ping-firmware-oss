@@ -1,0 +1,45 @@
+#ifndef _CONFIG_H_
+#define _CONFIG_H_
+
+/** Procol control bytes */
+
+#define PING_DEVICE_TYPE 9U
+#define PING_DEVICE_MODEL 1U
+#define PING_DEVICE_REVISION 19U
+
+#define PROTOCOL_VERSION_MAJOR 0U
+#define PROTOCOL_VERSION_MINOR 0U
+#define PROTOCOL_VERSION_PATCH 0U
+
+/** UART Control */
+
+#define SINGLE_MESSAGE_SIZE 18U
+
+#define UART_RX_BUFFER_SIZE 256U
+#define UART_TX_BUFFER_SIZE 256U
+
+/** Buffers */
+
+#define MAX_PROFILE_BUFFER_SIZE 200U
+#define PROFILE_MSG_BUFFER_SIZE (36U + MAX_PROFILE_BUFFER_SIZE)
+
+#define ADC1_DMA_BUFFER_SIZE 3U
+
+#define ADC4_DMA_BUFFER_SIZE 61000U
+
+/** Hardware Control */
+
+#define DRIVE_FREQUENCY_HZ 115015U
+
+/** Minimal allowed sampling frequency */
+#define MIN_SAMPLING_FREQUENCY_HZ (4U * DRIVE_FREQUENCY_HZ)
+
+#define MAX_SAMPLING_FREQUENCY_HZ (8U * DRIVE_FREQUENCY_HZ)
+
+/** DSP */
+
+#define STEADY_STATE_WINDOW_SIZE 480U
+
+#define ECHO_WINDOW_SIZE 16U
+
+#endif /** ! _CONFIG_H_ */
