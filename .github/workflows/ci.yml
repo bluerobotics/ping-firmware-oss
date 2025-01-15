@@ -1,0 +1,37 @@
+name: Verify firmware
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@master
+      with:
+        fetch-depth: 0
+
+    - name: Install Arm GNU Toolchain (arm-none-eabi-gcc)
+      uses: carlosperate/arm-none-eabi-gcc-action@v1
+      with:
+        release: '14.2.Rel1'
+
+    - name: Build
+      run: cd firmware && cmake -B build && cmake --build build --config Release --parallel
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ping-firmware-oss
+        path: firmware/build/*.hex
+        if-no-files-found: error
+
+    - name: Upload firmware in release
+      uses: svenstaro/upload-release-action@v2
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: firmware/build/*.hex
+        tag: ${{ github.ref }}
+        file_glob: true
+        overwrite: true
