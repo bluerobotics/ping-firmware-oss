@@ -166,6 +166,19 @@ extern "C" {
  */
 
 /**
+ * @brief Finds the maximum value in an 8-bit unsigned integer buffer.
+ *
+ * @param[in] buffer Pointer to the buffer containing the 8-bit unsigned integers.
+ * @param[in] size The number of elements in the buffer.
+ *
+ * @return The maximum value found in the buffer.
+ */
+uint8_t u8_fast_max(
+  volatile uint8_t *buffer,
+  uint16_t size
+) __attribute__((section (".ccmram")));
+
+/**
  * @brief Computes a fast mean for a buffer of uint8_t values.
  *
  * This function is optimized for buffer sizes that are integer multiples of 8.

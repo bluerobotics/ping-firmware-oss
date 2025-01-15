@@ -50,8 +50,11 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
 
     # DSP
+    "Core/Src/DSP/echo_finder.c"
+    "Core/Src/DSP/steady_state_finder.c"
     "Core/Src/DSP/u8_fast_abs_delta.c"
     "Core/Src/DSP/u8_fast_mean.c"
+    "Core/Src/DSP/u8_fast_max.c"
     "Core/Src/DSP/u8_fast_normalize.c"
     "Core/Src/DSP/u8_fast_std_dev.c"
 )

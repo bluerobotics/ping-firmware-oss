@@ -24,8 +24,6 @@ void u8_fast_abs_delta(volatile uint8_t *buffer, uint16_t size, uint32_t center_
 
   uint16_t block = size >> 3U;
   while (block > 0) {
-    /** TODO: Maybe try with __SIMD32 for clarity */
-
     /** This one is trick, but it uses the GE flag on the CPU to simulate 4 ifs at once and the operation */
 
     /**
