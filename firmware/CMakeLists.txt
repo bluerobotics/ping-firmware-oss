@@ -48,6 +48,12 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user sources here
+
+    # DSP
+    "Core/Src/DSP/u8_fast_abs_delta.c"
+    "Core/Src/DSP/u8_fast_mean.c"
+    "Core/Src/DSP/u8_fast_normalize.c"
+    "Core/Src/DSP/u8_fast_std_dev.c"
 )
 
 # Add include paths
@@ -65,4 +71,14 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
 
     # Add user defined libraries
+)
+
+# Create binary and hex files
+add_custom_command(
+    TARGET ${CMAKE_PROJECT_NAME}
+    POST_BUILD
+    COMMAND ${CMAKE_OBJCOPY} -O binary $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.bin
+    COMMAND ${CMAKE_OBJCOPY} -O ihex $<TARGET_FILE:${CMAKE_PROJECT_NAME}> ${CMAKE_PROJECT_NAME}.hex
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Creating binary and hex file"
 )
