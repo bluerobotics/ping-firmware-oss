@@ -25,7 +25,7 @@ uint8_t u8_fast_std_dev(volatile uint8_t *buffer, uint16_t size, uint8_t mean)
     /** Fetch 8 u8 as a u64 and update iterator 8 bytes forward */
     in = *_SIMD64(buffer)++;
     /** Add the sum of squares of each u8 in the accumulator */
-    _ACC_DEC_SQ_SIMD64(sum_of_squares, in)
+    _ACC_ADD_SQ_SIMD64(sum_of_squares, in)
 
     /** Next block */
     --block;
