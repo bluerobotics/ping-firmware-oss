@@ -39,4 +39,7 @@ uint16_t echo_finder(volatile uint8_t *buffer, uint16_t size, uint8_t std_deviat
     /** Next block */
     --block;
   }
+
+  /** TODO: Add left to right descent */
+  return 0U;
 }
