@@ -6,7 +6,7 @@ uint16_t steady_state_finder(volatile uint8_t *buffer, uint16_t size, uint8_t st
 {
   uint64_t in;
   uint32_t w_acc = 0U;
-  uint8_t *tail = buffer;
+  volatile uint8_t *tail = buffer;
   uint32_t target = STEADY_STATE_WINDOW_SIZE * std_deviation;
 
   /** Initializes the filter window */
@@ -33,10 +33,12 @@ uint16_t steady_state_finder(volatile uint8_t *buffer, uint16_t size, uint8_t st
     _ACC_DEC_SIMD64(w_acc, in)
 
     if (w_acc < target) {
-      return size - (STEADY_STATE_WINDOW_SIZE << 3U);
+      return size - (block << 3U);
     }
 
     /** Next block */
     --block;
   }
+
+  return 0U;
 }

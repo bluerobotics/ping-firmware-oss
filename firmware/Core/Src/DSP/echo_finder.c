@@ -6,8 +6,9 @@ uint16_t echo_finder(volatile uint8_t *buffer, uint16_t size, uint8_t std_deviat
 {
   uint64_t in;
   uint32_t w_acc = 0U;
-  uint8_t *tail = buffer;
-  uint32_t target = ECHO_WINDOW_SIZE * std_deviation * 3U;
+  volatile uint8_t *tail = buffer;
+  /** TODO: Change this 4U based on how big std_dev is compared to 255U */
+  uint32_t target = ECHO_WINDOW_SIZE * std_deviation * 4U;
 
   /** Initializes the filter window */
   uint16_t block = ECHO_WINDOW_SIZE >> 3U;
@@ -33,7 +34,7 @@ uint16_t echo_finder(volatile uint8_t *buffer, uint16_t size, uint8_t std_deviat
     _ACC_DEC_SIMD64(w_acc, in)
 
     if (w_acc > target) {
-      return size - (ECHO_WINDOW_SIZE << 3U);
+      return size - (block << 3U);
     }
 
     /** Next block */
