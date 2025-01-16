@@ -52,6 +52,7 @@ uint8_t u8_fast_max(volatile uint8_t *buffer, uint16_t size)
 
     __USUB8(*iter_buff, max);
     max = __SEL(*iter_buff, max);
+    ++iter_buff;
 
     /** Next block */
     --block;
