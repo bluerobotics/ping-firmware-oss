@@ -40,6 +40,6 @@
 
 #define STEADY_STATE_WINDOW_SIZE 480U
 
-#define ECHO_WINDOW_SIZE 16U
+#define ECHO_WINDOW_SIZE 24U
 
 #endif /** ! _CONFIG_H_ */
