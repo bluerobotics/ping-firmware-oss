@@ -45,14 +45,24 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(BOARD_LED_PIN_GPIO_Port, BOARD_LED_PIN_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pin : PA12 */
-  GPIO_InitStruct.Pin = GPIO_PIN_12;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(BOOT_CHARGE_PIN_GPIO_Port, BOOT_CHARGE_PIN_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : BOARD_LED_PIN_Pin */
+  GPIO_InitStruct.Pin = BOARD_LED_PIN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(BOARD_LED_PIN_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BOOT_CHARGE_PIN_Pin */
+  GPIO_InitStruct.Pin = BOOT_CHARGE_PIN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(BOOT_CHARGE_PIN_GPIO_Port, &GPIO_InitStruct);
 
 }
 
