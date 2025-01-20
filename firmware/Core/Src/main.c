@@ -127,11 +127,11 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_BYPASS;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
   RCC_OscInitStruct.PLL.PREDIV = RCC_PREDIV_DIV1;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -156,15 +156,19 @@ void SystemClock_Config(void)
                               |RCC_PERIPHCLK_TIM8|RCC_PERIPHCLK_ADC12
                               |RCC_PERIPHCLK_ADC34|RCC_PERIPHCLK_TIM2;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
-  PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
+  PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV12;
   PeriphClkInit.Adc34ClockSelection = RCC_ADC34PLLCLK_DIV1;
-  PeriphClkInit.Tim1ClockSelection = RCC_TIM1CLK_HCLK;
-  PeriphClkInit.Tim8ClockSelection = RCC_TIM8CLK_HCLK;
-  PeriphClkInit.Tim2ClockSelection = RCC_TIM2CLK_HCLK;
+  PeriphClkInit.Tim1ClockSelection = RCC_TIM1CLK_PLLCLK;
+  PeriphClkInit.Tim8ClockSelection = RCC_TIM8CLK_PLLCLK;
+  PeriphClkInit.Tim2ClockSelection = RCC_TIM2CLK_PLLCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();
   }
+
+  /** Enables the Clock Security System
+  */
+  HAL_RCC_EnableCSS();
 }
 
 /* USER CODE BEGIN 4 */
