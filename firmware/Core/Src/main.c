@@ -98,6 +98,7 @@ int main(void)
   MX_OPAMP3_Init();
   MX_OPAMP4_Init();
   MX_ADC4_Init();
+  MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -152,9 +153,10 @@ void SystemClock_Config(void)
     Error_Handler();
   }
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_USART1|RCC_PERIPHCLK_TIM1
-                              |RCC_PERIPHCLK_TIM8|RCC_PERIPHCLK_ADC34
-                              |RCC_PERIPHCLK_TIM2;
+                              |RCC_PERIPHCLK_TIM8|RCC_PERIPHCLK_ADC12
+                              |RCC_PERIPHCLK_ADC34|RCC_PERIPHCLK_TIM2;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK2;
+  PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
   PeriphClkInit.Adc34ClockSelection = RCC_ADC34PLLCLK_DIV1;
   PeriphClkInit.Tim1ClockSelection = RCC_TIM1CLK_HCLK;
   PeriphClkInit.Tim8ClockSelection = RCC_TIM8CLK_HCLK;

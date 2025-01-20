@@ -57,6 +57,10 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define BOARD_5V_Pin GPIO_PIN_2
+#define BOARD_5V_GPIO_Port GPIOC
+#define PCB_TEMPERATURE_Pin GPIO_PIN_2
+#define PCB_TEMPERATURE_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
