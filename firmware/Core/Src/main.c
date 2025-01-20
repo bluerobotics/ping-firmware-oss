@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "opamp.h"
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
@@ -93,6 +94,9 @@ int main(void)
   MX_TIM1_Init();
   MX_TIM2_Init();
   MX_TIM8_Init();
+  MX_OPAMP2_Init();
+  MX_OPAMP3_Init();
+  MX_OPAMP4_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
