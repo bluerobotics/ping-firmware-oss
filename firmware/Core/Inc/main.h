@@ -61,6 +61,10 @@ void Error_Handler(void);
 #define BOARD_5V_GPIO_Port GPIOC
 #define PCB_TEMPERATURE_Pin GPIO_PIN_2
 #define PCB_TEMPERATURE_GPIO_Port GPIOA
+#define BOARD_LED_PIN_Pin GPIO_PIN_9
+#define BOARD_LED_PIN_GPIO_Port GPIOC
+#define BOOT_CHARGE_PIN_Pin GPIO_PIN_7
+#define BOOT_CHARGE_PIN_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
