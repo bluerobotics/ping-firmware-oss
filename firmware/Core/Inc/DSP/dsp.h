@@ -174,6 +174,7 @@ extern "C" {
 uint16_t steady_state_finder(
   volatile uint8_t *buffer,
   uint16_t size,
+  uint16_t window_size,
   uint8_t std_deviation
 ) __attribute__((section (".ccmram")));
 
