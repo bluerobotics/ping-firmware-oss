@@ -56,6 +56,7 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     "Core/Src/DSP/u8_fast_mean.c"
     "Core/Src/DSP/u8_fast_max.c"
     "Core/Src/DSP/u8_fast_normalize.c"
+    "Core/Src/DSP/u8_fast_half_square.c"
     "Core/Src/DSP/u8_fast_std_dev.c"
 )
 

@@ -2,6 +2,27 @@
 
 #include "config.h"
 
+/**
+ * @brief Finds the index in the buffer where the Piezo transmission resonance shadow ends.
+ *
+ * This function identifies the steady-state point in a signal buffer where the piezoelectric transmission's resonance
+ * effect diminishes. It uses a moving window technique to evaluate when the value of the signal stabilizes bellow
+ * a given standard deviation threshold.
+ *
+ * @note It is recommended to compute the standard deviation threshold using only the second half of the signal buffer.
+ * This approach helps exclude the initial portion of the signal, which may contain transient noise or other artifacts.
+ * By focusing on the later part of the signal, the computed threshold will more accurately reflect the steady-state
+ * characteristics.
+ *
+ * @param[in] buffer Pointer to the buffer containing the signal to analyze.
+ * @param[in] size Number of elements in the buffer.
+ * @param[in] window_size Size of the moving window used to compute the sum of the signal.
+ * @param[in] std_deviation Standard deviation threshold used to detect the steady state.
+ *
+ * @return The index in the buffer where the steady state starts (resonance shadow ends).
+ *
+ * @note This function is optimized for real-time embedded systems and is located in `.ccmram` for improved performance.
+ */
 uint16_t steady_state_finder(volatile uint8_t *buffer, uint16_t size, uint8_t std_deviation)
 {
   uint64_t in;
@@ -20,6 +41,10 @@ uint16_t steady_state_finder(volatile uint8_t *buffer, uint16_t size, uint8_t st
 
     /** Next block */
     --block;
+  }
+
+  if (w_acc < target) {
+    return 0U;
   }
 
   block = (size - STEADY_STATE_WINDOW_SIZE) >> 3U;
