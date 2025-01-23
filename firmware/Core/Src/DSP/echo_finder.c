@@ -2,13 +2,38 @@
 
 #include "config.h"
 
-uint16_t echo_finder(volatile uint8_t *buffer, uint16_t size, uint8_t std_deviation)
+/**
+ * @brief Finds the index in the buffer where the echo signal is detected.
+ *
+ * This function analyzes the signal buffer to locate the start of the echo signal. It uses a moving window technique
+ * to evaluate when the value of the signal pass a certain threshold based on the standard deviation. And when this
+ * point is located, it make a right to left search to find the first point where the signal starts
+ *
+ * @note It is recommended to compute the standard deviation threshold using only the second half of the signal buffer.
+ * This approach helps exclude the initial portion of the signal, which may contain transient noise or other artifacts.
+ * By focusing on the later part of the signal, the computed threshold will more accurately reflect the steady-state
+ * characteristics.
+ *
+ * @param[in] buffer Pointer to the buffer containing the signal to analyze.
+ * @param[in] size Number of elements in the buffer.
+ * @param[in] window_size Size of the moving window used to compute the sum of the signal.
+ * @param[in] threshold Standard deviation threshold used to detect the echo signal.
+ *
+ * @return The index in the buffer where the echo signal starts.
+ *
+ * @note It is recommended to carefully select the standard deviation threshold based on the expected
+ * signal and noise levels to ensure accurate detection.
+ */
+uint16_t echo_finder(volatile uint8_t *buffer, uint16_t size, uint16_t window_size, uint8_t threshold)
 {
   uint64_t in;
   uint32_t w_acc = 0U;
   volatile uint8_t *tail = buffer;
-  /** TODO: Change this 4U based on how big std_dev is compared to 255U */
-  uint32_t target = ECHO_WINDOW_SIZE * std_deviation * 4U;
+  /**
+   * NOTE: We could probably just change for a constant but compiler is optimizing away if so right now, worths maybe
+   * in future compile all DSP module as a separated library.
+   */
+  uint32_t target = threshold * window_size;
 
   /** Initializes the filter window */
   uint16_t block = ECHO_WINDOW_SIZE >> 3U;
@@ -21,6 +46,10 @@ uint16_t echo_finder(volatile uint8_t *buffer, uint16_t size, uint8_t std_deviat
 
     /** Next block */
     --block;
+  }
+
+  if (w_acc > target) {
+    return 1U;
   }
 
   block = (size - ECHO_WINDOW_SIZE) >> 3U;

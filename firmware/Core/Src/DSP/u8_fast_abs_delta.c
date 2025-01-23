@@ -36,12 +36,12 @@ void u8_fast_abs_delta(volatile uint8_t *buffer, uint16_t size, uint32_t center_
      * 80 - 127 -> GE = 0
      * 174 - 127 -> GE = 1
      */
-    __USUB8(*iter_buff, __U32_127);
+    __USUB8(*iter_buff, center_pack);
 
     /**
-     * Now we have the GE flags set for each byte of the operation, SEL will select bytes from *iter_buff and __U32_127
+     * Now we have the GE flags set for each byte of the operation, SEL will select bytes from *iter_buff and center_pack
      * based on the GE flags, if GE is 1 it will select the byte from *iter_buff, if GE is 0 it will select the byte
-     * from __U32_127
+     * from center_pack
      *
      * GE is 0 -> Select 127
      * GE is 1 -> Select 174
@@ -50,7 +50,7 @@ void u8_fast_abs_delta(volatile uint8_t *buffer, uint16_t size, uint32_t center_
      *
      * frac1 = 127 174 127 174
      */
-    frac1 = __SEL(*iter_buff, __U32_127);
+    frac1 = __SEL(*iter_buff, center_pack);
 
     /**
      * GE is 0 -> Select 80
@@ -60,7 +60,7 @@ void u8_fast_abs_delta(volatile uint8_t *buffer, uint16_t size, uint32_t center_
      *
      * frac2 = 80 127 80 127
      */
-    frac2 = __SEL(__U32_127, *iter_buff);
+    frac2 = __SEL(center_pack, *iter_buff);
 
     /**
      * Now we have the two fractions, we need to subtract 127 from the first one and the second one from 127
@@ -72,7 +72,7 @@ void u8_fast_abs_delta(volatile uint8_t *buffer, uint16_t size, uint32_t center_
      *
      * frac1 = 0 47 0 47
      */
-    frac1 = __USUB8(frac1, __U32_127);
+    frac1 = __USUB8(frac1, center_pack);
 
     /**
      * 127 - 80 = 47
@@ -82,7 +82,7 @@ void u8_fast_abs_delta(volatile uint8_t *buffer, uint16_t size, uint32_t center_
      *
      * frac2 = 47 0 47 0
      */
-    frac2 = __USUB8(__U32_127, frac2);
+    frac2 = __USUB8(center_pack, frac2);
 
     /**
      * Now we have the two fractions, we need to OR them to get the final result
@@ -101,11 +101,11 @@ void u8_fast_abs_delta(volatile uint8_t *buffer, uint16_t size, uint32_t center_
 
     /** And so on... */
 
-    __USUB8(*iter_buff, __U32_127);
-    frac1 = __SEL(*iter_buff, __U32_127);
-    frac2 = __SEL(__U32_127, *iter_buff);
-    frac1 = __USUB8(frac1, __U32_127);
-    frac2 = __USUB8(__U32_127, frac2);
+    __USUB8(*iter_buff, center_pack);
+    frac1 = __SEL(*iter_buff, center_pack);
+    frac2 = __SEL(center_pack, *iter_buff);
+    frac1 = __USUB8(frac1, center_pack);
+    frac2 = __USUB8(center_pack, frac2);
     *iter_buff = frac1 | frac2;
     ++iter_buff;
 

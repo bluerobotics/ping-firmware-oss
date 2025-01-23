@@ -1,5 +1,4 @@
-#ifndef _SONAR_DSP_H_
-#define _SONAR_DSP_H_
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -13,14 +12,21 @@ extern "C" {
  * @brief Address reinterpretation for SIMD 64-bit operations.
  * @param addr Address to reinterpret.
  */
-#define _SIMD64(addr) (*(int64_t **) & (addr))
+#define _SIMD64(addr) (*(uint64_t **) & (addr))
 
 /**
  * @def _SIMD32
  * @brief Address reinterpretation for SIMD 32-bit operations.
  * @param addr Address to reinterpret.
  */
-#define _SIMD32(addr) (*(int32_t **) & (addr))
+#define _SIMD32(addr) (*(uint32_t **) & (addr))
+
+/**
+ * @def _U32_PACK
+ * @brief Pack a 8-bit value into a 32-bit integer format.
+ * @param val The value to pack.
+ */
+#define _U32_PACK(val) ((val) | ((val) << 8U) | ((val) << 16U) | ((val) << 24U))
 
 /**
  * @brief Shift based approach is faster for _ACC_ADD_SIMD64 and _ACC_DEC_SIMD64.
@@ -159,151 +165,71 @@ extern "C" {
  * @brief Convenience macro for four 8-bit unsigned integers spread across a 32-bit value.
  *        Binary representation: 01111111 01111111 01111111 01111111.
  */
-#define __U32_127 0b01111111011111110111111101111111
+#define __U32_127 2139062143U
 
 /**
  * @brief All functions are placed in .ccmram for best performance
  */
 
-/**
- * @brief Finds the maximum value in an 8-bit unsigned integer buffer.
- *
- * @param[in] buffer Pointer to the buffer containing the 8-bit unsigned integers.
- * @param[in] size The number of elements in the buffer.
- *
- * @return The maximum value found in the buffer.
- */
-uint8_t u8_fast_max(
-  volatile uint8_t *buffer,
-  uint16_t size
-) __attribute__((section (".ccmram")));
-
-/**
- * @brief Computes a fast mean for a buffer of uint8_t values.
- *
- * This function is optimized for buffer sizes that are integer multiples of 8.
- *
- * @param[in] buffer Pointer to the buffer to process.
- * @param[in] size Number of elements in the buffer to process.
- * @return uint8_t The computed mean value of the buffer.
- */
-uint8_t u8_fast_mean(
-  volatile uint8_t *buffer,
-  uint16_t size
-) __attribute__((section (".ccmram")));
-
-/**
- * @brief Computes a fast standard deviation for a buffer of uint8_t values.
- *
- * This function is optimized for buffer sizes that are integer multiples of 8.
- *
- * @param[in] buffer Pointer to the buffer to process.
- * @param[in] size Number of elements in the buffer to process.
- * @param[in] mean The mean value of the buffer.
- * @return uint8_t The computed standard deviation.
- */
-uint8_t u8_fast_std_dev(
-  volatile uint8_t *buffer,
-  uint16_t size,
-  uint8_t mean
-) __attribute__((section (".ccmram")));
-
-/**
- * @brief Computes the absolute delta of each element in a buffer from a center value.
- *
- * Optimized for buffer sizes that are integer multiples of 8. For example, if a center
- * value of 127U is provided, the absolute delta is computed as:
- *
- * @code
- * value = value > 127U ? value - 127U : 127U - value;
- * @endcode
- *
- * @param[in,out] buffer Pointer to the buffer to process. The result is stored in the same buffer.
- * @param[in] size Number of elements in the buffer to process.
- * @param[in] center_pack The center value to compute the absolute delta.
- */
-void u8_fast_abs_delta(
-  volatile uint8_t *buffer,
-  uint16_t size,
-  uint32_t center_pack
-) __attribute__((section (".ccmram")));
-
-/**
- * @brief Normalizes all values in the buffer to an 8-bit maximum value (255) based on a given maximum value.
- *
- * This function is optimized for buffer sizes that are integer multiples of 8.
- *
- * The normalization formula is:
- *
- * @code
- * value = saturate(value * 256 / max);
- * @endcode
- *
- * @param[in,out] buffer Pointer to the buffer to process. The result is stored in the same buffer.
- * @param[in] size Number of elements to process in the buffer.
- * @param[in] max The maximum value used for normalization scale.
- */
-void u8_fast_normalize(
-  volatile uint8_t *buffer,
-  uint16_t size,
-  uint8_t max
-) __attribute__((section (".ccmram")));
-
-/**
- * @brief Finds the index in the buffer where the Piezo transmission resonance shadow ends.
- *
- * This function identifies the steady-state point in a signal buffer where the piezoelectric transmission's resonance
- * effect diminishes. It uses a moving window technique to evaluate when the value of the signal stabilizes bellow
- * a given standard deviation threshold.
- *
- * @note It is recommended to compute the standard deviation threshold using only the second half of the signal buffer.
- * This approach helps exclude the initial portion of the signal, which may contain transient noise or other artifacts.
- * By focusing on the later part of the signal, the computed threshold will more accurately reflect the steady-state
- * characteristics.
- *
- * @param[in] buffer Pointer to the buffer containing the signal to analyze.
- * @param[in] size Number of elements in the buffer.
- * @param[in] std_deviation Standard deviation threshold used to detect the steady state.
- *
- * @return The index in the buffer where the steady state starts (resonance shadow ends).
- *
- * @note This function is optimized for real-time embedded systems and is located in `.ccmram` for improved performance.
- */
 uint16_t steady_state_finder(
   volatile uint8_t *buffer,
   uint16_t size,
   uint8_t std_deviation
 ) __attribute__((section (".ccmram")));
 
-/**
- * @brief Finds the index in the buffer where the echo signal is detected.
- *
- * This function analyzes the signal buffer to locate the start of the echo signal. It uses a moving window technique
- * to evaluate when the value of the signal pass a certain threshold based on the standard deviation. And when this
- * point is located, it make a right to left search to find the first point where the signal starts
- *
- * @note It is recommended to compute the standard deviation threshold using only the second half of the signal buffer.
- * This approach helps exclude the initial portion of the signal, which may contain transient noise or other artifacts.
- * By focusing on the later part of the signal, the computed threshold will more accurately reflect the steady-state
- * characteristics.
- *
- * @param[in] buffer Pointer to the buffer containing the signal to analyze.
- * @param[in] size Number of elements in the buffer.
- * @param[in] std_deviation Standard deviation.
- *
- * @return The index in the buffer where the echo signal starts.
- *
- * @note It is recommended to carefully select the standard deviation threshold based on the expected
- * signal and noise levels to ensure accurate detection.
- */
 uint16_t echo_finder(
   volatile uint8_t *buffer,
   uint16_t size,
-  uint8_t std_deviation
+  uint16_t window_size,
+  uint8_t threshold
+) __attribute__((section (".ccmram")));
+
+void u8_compress_profile(
+  volatile uint8_t *input,
+  uint16_t in_size,
+  volatile uint8_t *output,
+  uint16_t out_size
+) __attribute__((section (".ccmram")));
+
+void u8_fast_abs_delta(
+  volatile uint8_t *buffer,
+  uint16_t size,
+  uint32_t center_pack
+) __attribute__((section (".ccmram")));
+
+uint8_t u8_fast_max(
+  volatile uint8_t *buffer,
+  uint16_t size
+) __attribute__((section (".ccmram")));
+
+uint8_t u8_fast_mean(
+  volatile uint8_t *buffer,
+  uint16_t size
+) __attribute__((section (".ccmram")));
+
+void u8_fast_normalize(
+  volatile uint8_t *buffer,
+  uint16_t size,
+  uint8_t max
+) __attribute__((section (".ccmram")));
+
+void u8_fast_half_square(
+  volatile uint8_t *buffer,
+  uint16_t size
+) __attribute__((section (".ccmram")));
+
+uint8_t u8_fast_std_dev(
+  volatile uint8_t *buffer,
+  uint16_t size,
+  uint8_t mean
+) __attribute__((section (".ccmram")));
+
+void u8_fast_threshold_cut(
+  volatile uint8_t *buffer,
+  uint16_t size,
+  uint32_t threshold_pack
 ) __attribute__((section (".ccmram")));
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /** !_SONAR_DSP_H_ */
