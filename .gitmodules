@@ -1,0 +1,3 @@
+[submodule "firmware/Lib/ping-cpp"]
+	path = firmware/Lib/ping-cpp
+	url = git@github.com:bluerobotics/ping-cpp.git
