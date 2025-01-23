@@ -28,6 +28,12 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include <cstdint>
+
+#include "config.h"
+#include "Sonar/board.h"
+#include "Sonar/server.h"
+#include "Sonar/sonar.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -103,15 +109,37 @@ int main(void)
   MX_IWDG_Init();
   /* USER CODE BEGIN 2 */
 
+  PingSonar &sonar = PingSonar::GetInstance();
+  sonar.init();
+
+  SonarBoard &board = SonarBoard::GetInstance();
+  board.init();
+
+  SonarServer &server = SonarServer::GetInstance();
+  server.init();
+
+  sonar.refresh();
+
+  uint32_t lastRefresh = HAL_GetTick();
+
+  /** TODO: Add bias adjust using DAC */
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    server.update();
+    sonar.update();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if (HAL_GetTick() - lastRefresh > IWDG_REFRESH_INTERVAL_MS)
+    {
+      HAL_IWDG_Refresh(&hiwdg);
+      lastRefresh = HAL_GetTick();
+    }
   }
   /* USER CODE END 3 */
 }
@@ -122,9 +150,9 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
-  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
+  RCC_OscInitTypeDef RCC_OscInitStruct = {};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {};
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.

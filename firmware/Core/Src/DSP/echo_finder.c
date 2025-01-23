@@ -36,7 +36,7 @@ uint16_t echo_finder(volatile uint8_t *buffer, uint16_t size, uint16_t window_si
   uint32_t target = threshold * window_size;
 
   /** Initializes the filter window */
-  uint16_t block = ECHO_WINDOW_SIZE >> 3U;
+  uint16_t block = window_size >> 3U;
   while (block > 0)
   {
     /** Fetch 8 u8 as a u64 and update iterator 8 bytes forward */
@@ -52,7 +52,7 @@ uint16_t echo_finder(volatile uint8_t *buffer, uint16_t size, uint16_t window_si
     return 1U;
   }
 
-  block = (size - ECHO_WINDOW_SIZE) >> 3U;
+  block = (size - window_size) >> 3U;
   while (block > 0)
   {
     in = *_SIMD64(buffer)++;

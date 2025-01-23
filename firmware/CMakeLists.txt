@@ -12,6 +12,8 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
@@ -27,8 +29,8 @@ include("cmake/gcc-arm-none-eabi.cmake")
 # Enable compile command to ease indexing with e.g. clangd
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
 
-# Enable CMake support for ASM and C languages
-enable_language(C ASM)
+# Enable CMake support for ASM, C and C++ languages
+enable_language(C ASM CXX)
 
 # Core project settings
 project(${CMAKE_PROJECT_NAME})
@@ -39,6 +41,15 @@ add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
+
+# Add ping-cpp lib
+set(PING_CPP_BUILD_DIR ${CMAKE_BINARY_DIR}/ping-cpp)
+add_custom_target(build-ping-cpp ALL
+    COMMAND ${CMAKE_COMMAND} -B${PING_CPP_BUILD_DIR} -S${CMAKE_SOURCE_DIR}/Lib/ping-cpp -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
+    COMMAND ${CMAKE_COMMAND} --build ${PING_CPP_BUILD_DIR} --config ${CMAKE_BUILD_TYPE}
+    COMMENT "Building ping-cpp with the host compiler"
+)
+add_dependencies(${CMAKE_PROJECT_NAME} build-ping-cpp)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -52,17 +63,25 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     # DSP
     "Core/Src/DSP/echo_finder.c"
     "Core/Src/DSP/steady_state_finder.c"
+    "Core/Src/DSP/u8_compress_profile.c"
     "Core/Src/DSP/u8_fast_abs_delta.c"
-    "Core/Src/DSP/u8_fast_mean.c"
     "Core/Src/DSP/u8_fast_max.c"
+    "Core/Src/DSP/u8_fast_mean.c"
     "Core/Src/DSP/u8_fast_normalize.c"
     "Core/Src/DSP/u8_fast_half_square.c"
     "Core/Src/DSP/u8_fast_std_dev.c"
+    "Core/Src/DSP/u8_fast_threshold_cut.c"
+
+    # Sonar
+    "Core/Src/Sonar/board.cpp"
+    "Core/Src/Sonar/sonar.cpp"
+    "Core/Src/Sonar/server.cpp"
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
+    "Lib/ping-cpp/src/message" # Generated headers from ping-cpp
 )
 
 # Add project symbols (macros)

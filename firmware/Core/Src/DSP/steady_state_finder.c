@@ -23,15 +23,15 @@
  *
  * @note This function is optimized for real-time embedded systems and is located in `.ccmram` for improved performance.
  */
-uint16_t steady_state_finder(volatile uint8_t *buffer, uint16_t size, uint8_t std_deviation)
+uint16_t steady_state_finder(volatile uint8_t *buffer, uint16_t size, uint16_t window_size, uint8_t std_deviation)
 {
   uint64_t in;
   uint32_t w_acc = 0U;
   volatile uint8_t *tail = buffer;
-  uint32_t target = STEADY_STATE_WINDOW_SIZE * std_deviation;
+  uint32_t target = window_size * std_deviation;
 
   /** Initializes the filter window */
-  uint16_t block = STEADY_STATE_WINDOW_SIZE >> 3U;
+  uint16_t block = window_size >> 3U;
   while (block > 0)
   {
     /** Fetch 8 u8 as a u64 and update iterator 8 bytes forward */
@@ -47,7 +47,7 @@ uint16_t steady_state_finder(volatile uint8_t *buffer, uint16_t size, uint8_t st
     return 0U;
   }
 
-  block = (size - STEADY_STATE_WINDOW_SIZE) >> 3U;
+  block = (size - window_size) >> 3U;
   while (block > 0)
   {
     in = *_SIMD64(buffer)++;
