@@ -105,6 +105,12 @@ void MX_ADC1_Init(void)
   }
   /* USER CODE BEGIN ADC1_Init 2 */
 
+  /** Calibrate ADC1 */
+  if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
   /* USER CODE END ADC1_Init 2 */
 
 }
@@ -156,6 +162,12 @@ void MX_ADC4_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN ADC4_Init 2 */
+
+  /** Calibrate ADC4 */
+  if (HAL_ADCEx_Calibration_Start(&hadc4, ADC_SINGLE_ENDED) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
   /* USER CODE END ADC4_Init 2 */
 
