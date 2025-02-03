@@ -145,13 +145,13 @@
  * @def DESIRED_RANGE_RESOLUTION
  * @brief Defines the desired range resolution as percentage of the scan range.
  */
-#define DESIRED_RANGE_RESOLUTION 0.005f
+#define DESIRED_RANGE_RESOLUTION 0.048f
 
 /**
  * @def MIN_TRANSMIT_REPETITIONS
  * @brief Defines the minimum number of transmit repetitions to ensure a reliable signal.
  */
-#define MIN_TRANSMIT_REPETITIONS 4U
+#define MIN_TRANSMIT_REPETITIONS 3U
 
 /**
  * ============================
