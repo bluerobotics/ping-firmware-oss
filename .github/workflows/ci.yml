@@ -10,11 +10,15 @@ jobs:
     - uses: actions/checkout@master
       with:
         fetch-depth: 0
+        submodules: recursive
 
     - name: Install Arm GNU Toolchain (arm-none-eabi-gcc)
       uses: carlosperate/arm-none-eabi-gcc-action@v1
       with:
         release: '14.2.Rel1'
+
+    - name: Install Boost CMake
+      run: sudo apt-get install libboost-all-dev
 
     - name: Build
       run: cd firmware && cmake -B build && cmake --build build --config Release --parallel
