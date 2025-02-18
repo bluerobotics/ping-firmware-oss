@@ -154,6 +154,18 @@
 #define MIN_TRANSMIT_REPETITIONS 3U
 
 /**
+ * @def MIN_TRANSMIT_DURATION_US
+ * @brief Defines the maximum number of points used when calculating the avg to adjust the signal bias using DAC.
+ */
+#define DAC_BIAS_ADJUST_MEAN_WINDOW_SIZE 8 * 1000U
+
+/**
+ * @def DESIRED_SIGNAL_CENTER_VALUE
+ * @brief Defines the desired center value of the signal.
+ */
+#define DESIRED_SIGNAL_CENTER_VALUE 127
+
+/**
  * ============================
  * DSP Algorithm Configuration
  * ============================

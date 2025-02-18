@@ -105,7 +105,8 @@ protected:
   void adjustADCForRange();
   void adjustTransmitForRange();
   void adjustSampleTriggerForRange();
-  void adjustReceiveChainGain() const;
+  void adjustReceiveChainGain();
+  void adjustSignalBias();
 
   uint32_t desiredSamplingFrequencyHz() const;
   uint16_t transmitRepetitionCounter() const;
