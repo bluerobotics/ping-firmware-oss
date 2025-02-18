@@ -315,6 +315,7 @@ void PingSonar::adjustReceiveChainGain() const
 {
   HAL_OPAMP_Stop(&hopamp2);
   HAL_OPAMP_Stop(&hopamp3);
+  HAL_OPAMP_Stop(&hopamp4);
 
   switch (_gainSetting)
   {
@@ -360,8 +361,14 @@ void PingSonar::adjustReceiveChainGain() const
     Error_Handler();
   }
 
+  if (HAL_OPAMP_SelfCalibrate(&hopamp4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
   HAL_OPAMP_Start(&hopamp2);
   HAL_OPAMP_Start(&hopamp3);
+  HAL_OPAMP_Start(&hopamp4);
 }
 
 /**
