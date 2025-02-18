@@ -77,10 +77,23 @@ void PingSonar::update()
   }
 
   /** If someone requested a refresh due to parameters change */
-  if (_refreshRequired) {
-    refresh();
-    _refreshRequired = 0U;
+  if (_refreshRequired != SonarRefreshType::NONE) {
+    switch (_refreshRequired)
+    {
+      case SonarRefreshType::RANGE:
+        adjustSonarForRange();
+        break;
+      case SonarRefreshType::GAINS:
+        adjustReceiveChainGain();
+        break;
+      case SonarRefreshType::BOTH:
+        refresh();
+        break;
+      default:
+        break;
+    }
 
+    _refreshRequired = SonarRefreshType::NONE;
     /**
      * If the sonar is ready to process data, it is necessary to discard the current data and restart the process,
      * as the acquired data will not align with the current operational parameters
@@ -107,8 +120,16 @@ void PingSonar::update()
 
   if (_machineState == SonarMachineState::DATA_READY) {
     /** Signal Processing */
-    adjustSignalBias();
+    if (_autoRangeSearching == 0U || _isModeAuto == 0U) {
+      adjustSignalBias();
+    }
     processProfile();
+    updateEstimationsAverage();
+
+    /** Auto adjusting */
+    if (_isModeAuto) {
+      processAutoRange();
+    }
 
     ++_pingNumber;
     _machineState = SonarMachineState::PROFILE_GENERATED;
@@ -148,9 +169,9 @@ void PingSonar::update()
 /**
  * @brief Request a refresh of the sonar device operational parameters on the next update cycle.
  */
-void PingSonar::asyncRefresh()
+void PingSonar::asyncRefresh(SonarRefreshType type)
 {
-  _refreshRequired = 1U;
+  _refreshRequired = type;
 }
 
 /**
@@ -158,9 +179,6 @@ void PingSonar::asyncRefresh()
  */
 void PingSonar::refresh()
 {
-  /** Since we use this in a lot of place we just calculate here */
-  _halfSpeedOfSound = (float)_speedOfSound / 2.0f;
-
   adjustReceiveChainGain();
   adjustSonarForRange();
 }
@@ -284,6 +302,10 @@ void PingSonar::processProfile()
     if (std_dev > 200U || mean > 150U) {
       _lockedConfidence = 0U;
     }
+
+    if (_lockedConfidence > 95U) {
+      _lockedConfidence = 100U;
+    }
   } else {
     /** No lock... */
     _lockedDistance = 0U;
@@ -292,6 +314,110 @@ void PingSonar::processProfile()
 
   /** Last step is compress the profile data for user */
   u8_compress_profile(_DMABufferADC4, _sampleCycles, server.bufferProfile() + 34U, _nProfilePoints);
+}
+
+void PingSonar::updateEstimationsAverage()
+{
+  /** Estimate leaving element */
+  uint32_t leavingConfidence = _lockedConfidenceAcc / _lockedValuesWindowSize;
+  uint32_t leavingDistance = _lockedDistanceAcc / _lockedValuesWindowSize;
+
+  /** Update accumulators */
+  _lockedConfidenceAcc -= leavingConfidence;
+  _lockedDistanceAcc -= leavingDistance;
+  _lockedConfidenceAcc += _lockedConfidence;
+  _lockedDistanceAcc += _lockedDistance;
+
+  /** Update averages */
+  _lockedConfidenceAvg = _lockedConfidenceAcc / _lockedValuesWindowSize;
+  _lockedDistanceAvg = _lockedDistanceAcc / _lockedValuesWindowSize;
+
+  if (_lockedConfidenceAvg > 95U) {
+    _lockedConfidenceAvg = 100U;
+  }
+}
+
+void PingSonar::resetEstimationsAverage()
+{
+  _lockedConfidenceAcc = 0U;
+  _lockedDistanceAcc = 0U;
+  _lockedConfidenceAvg = 0U;
+  _lockedDistanceAvg = 0U;
+}
+
+void PingSonar::updateRangeBoundaries()
+{
+  uint32_t _scanLength = (uint32_t)((float)_lockedDistanceAvg / AUTO_RANGE_TARGET_CENTER_AT);
+  uint32_t halfDelta = (uint32_t)((float)_scanLength * (AUTO_RANGE_BOUNDARY_DELTA / 2.0f));
+
+  int32_t newLowerBoundary = (int32_t)_lockedDistanceAvg - (int32_t)halfDelta;
+  newLowerBoundary = newLowerBoundary < 0 ? 0 : newLowerBoundary;
+  _lowerRangeBoundary = (uint32_t)newLowerBoundary;
+
+  _upperRangeBoundary = _lockedDistanceAvg + halfDelta;
+  _upperRangeBoundary = _upperRangeBoundary > _scanLength ? _scanLength : _upperRangeBoundary;
+
+  /** Clamp values */
+  _scanLength = _scanLength < 1000U ? 1000U : _scanLength;
+
+  setRangeScanLength(_scanLength);
+  asyncRefresh(SonarRefreshType::RANGE);
+}
+
+/**
+ * @brief Executes the auto ranging sequence based on collected profile data and estimates.
+ *
+ * This functions controls the effective range that the sonar should operate, it tries to keep the target at around 70%
+ * of the range scan length. In case the target is lock it starts a sweep to find the best range to operate.
+ */
+void PingSonar::processAutoRange()
+{
+  /** TODO: Add auto gain estimation based on std dev */
+
+  /** We can only adjust the range with a stable bias */
+  if (_signalBiasStable == 0U) {
+    _autoRangeSearching = 0U;
+    return;
+  }
+
+  /** Auto ranging trigger */
+  if (_lockedConfidenceAvg < AUTO_RANGE_CONFIDENCE_THRESHOLD) {
+    if (!_autoRangeSearching) {
+      _autoRangeSearching = 1U;
+      _autoRangeLockingFor = 0U;
+
+      resetEstimationsAverage();
+      setRangeScanLength(AUTO_RANGE_SWEEP_START_MM);
+      asyncRefresh(SonarRefreshType::RANGE);
+      return;
+    }
+
+    if (_autoRangeLockingFor > _lockedValuesWindowSize) {
+      _autoRangeLockingFor = 0U;
+      resetEstimationsAverage();
+
+      if (_rangeScanLength < AUTO_RANGE_SWEEP_END_MM) {
+        setRangeScanLength(_rangeScanLength + AUTO_RANGE_SWEEP_STEP_MM);
+        asyncRefresh(SonarRefreshType::RANGE);
+      } else {
+        _autoRangeSearching = 0U;
+      }
+    }
+
+    _autoRangeLockingFor++;
+  }
+
+  if (_lockedConfidenceAvg >= AUTO_RANGE_CONFIDENCE_THRESHOLD) {
+    /** Was searching and found the range */
+    if (_autoRangeSearching) {
+      updateRangeBoundaries();
+      _autoRangeSearching = 0U;
+    }
+
+    if (_lockedDistanceAvg < _lowerRangeBoundary || _lockedDistanceAvg > _upperRangeBoundary) {
+      updateRangeBoundaries();
+    }
+  }
 }
 
 /**
@@ -305,8 +431,10 @@ void PingSonar::processProfile()
  */
 void PingSonar::adjustSonarForRange()
 {
-  /** The following functions have side effects. Be cautious when changing their order. */
+  /** Since we use this in a lot of place we just calculate here */
+  _halfSpeedOfSound = (float)_speedOfSound / 2.0f;
 
+  /** The following functions have side effects. Be cautious when changing their order. */
   adjustTransmitForRange();
   adjustSampleTriggerForRange();
   adjustADCForRange();
@@ -404,13 +532,16 @@ void PingSonar::adjustSignalBias()
   uint8_t avg = u8_fast_mean(&_DMABufferADC4[start_index], window_size);
 
   /** We need to adjust the bias to the center proportional to the error */
+  uint8_t diff = 255U;
   if (avg > DESIRED_SIGNAL_CENTER_VALUE) {
-    uint8_t diff  = avg - DESIRED_SIGNAL_CENTER_VALUE;
+    diff = avg - DESIRED_SIGNAL_CENTER_VALUE;
     dac = (dac > diff) ? dac - diff : 0U;
   } else {
-    uint8_t diff  = DESIRED_SIGNAL_CENTER_VALUE - avg;
+    diff = DESIRED_SIGNAL_CENTER_VALUE - avg;
     dac = (dac + diff > MAX_DAC) ? MAX_DAC : dac + diff;
   }
+
+  _signalBiasStable = diff < 1U;
 
   HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dac);
 }
@@ -425,7 +556,6 @@ void PingSonar::adjustSignalBias()
  */
 void PingSonar::adjustADCSamplingTime(uint32_t samplingFrequencyHz) const
 {
-
   if (samplingFrequencyHz < 1028570) {
     LL_ADC_SetChannelSamplingTime(hadc4.Instance, LL_ADC_CHANNEL_5, ADC_SAMPLETIME_61CYCLES_5);
     return;
@@ -561,7 +691,7 @@ void PingSonar::adjustSampleTriggerForRange()
  */
 uint16_t PingSonar::transmitRepetitionCounter() const
 {
-  const float singleExcitationLength = (1.0f / (float)DRIVE_FREQUENCY_HZ) * _halfSpeedOfSound;
+  const float singleExcitationLength = (1.0f / (float)DRIVE_FREQUENCY_HZ) * _speedOfSound;
 
   /**
    * NOTE: This one may seems like a bug, and for sure is not "Ideally" correct, since the range resolution is should
@@ -622,6 +752,7 @@ uint8_t PingSonar::setGainSetting(uint8_t gainSetting)
   }
 
   _gainSetting = gainSetting;
+  asyncRefresh(SonarRefreshType::GAINS);
 
   return HAL_OK;
 }
@@ -714,12 +845,13 @@ void PingSonar::setRangeScanStart(uint32_t scanStart)
 uint8_t PingSonar::setRangeScanLength(uint32_t scanLength)
 {
   /** Scan Length must be greater than 1000mm */
-  if (scanLength < 1000)
+  if (scanLength < 1000U)
   {
     return HAL_ERROR;
   }
 
   _rangeScanLength = scanLength;
+  asyncRefresh(SonarRefreshType::RANGE);
 
   return HAL_OK;
 }
@@ -733,6 +865,8 @@ void PingSonar::setSpeedOfSound(uint32_t speedOfSound)
 {
   _speedOfSound = speedOfSound;
   _halfSpeedOfSound = (float)speedOfSound / 2.0f;
+
+  asyncRefresh(SonarRefreshType::RANGE);
 }
 
 /**

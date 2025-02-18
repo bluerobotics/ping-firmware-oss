@@ -167,6 +167,68 @@
 
 /**
  * ============================
+ * Auto Range Control
+ * ============================
+ */
+
+/**
+ * @def AUTO_RANGE_SWEEP_START_MM
+ * @brief Defines the starting distance (in millimeters) for the auto-ranging sweep.
+ *
+ * This value sets the minimum scan range limit where auto-ranging begins detecting targets.
+ */
+#define AUTO_RANGE_SWEEP_START_MM 5000U
+
+/**
+ * @def AUTO_RANGE_SWEEP_END_MM
+ * @brief Defines the ending distance (in millimeters) for the auto-ranging sweep.
+ *
+ * This value sets the maximum scan range limit where auto-ranging stops searching for targets.
+ */
+#define AUTO_RANGE_SWEEP_END_MM 70000U
+
+/**
+ * @def AUTO_RANGE_SWEEP_STEP_MM
+ * @brief Defines the step size (in millimeters) for the auto-ranging sweep.
+ */
+#define AUTO_RANGE_SWEEP_STEP_MM 20000U
+
+/**
+ * @def AUTO_RANGE_CONFIDENCE_THRESHOLD
+ * @brief Specifies the confidence threshold for auto-ranging to trigger.
+ *
+ * @note: Percentage in format 0U to 100U.
+ *
+ */
+#define AUTO_RANGE_CONFIDENCE_THRESHOLD 50U
+
+/**
+ * @def AUTO_RANGE_TARGET_CENTER_AT
+ * @brief Specifies the target position within the scan range for auto-ranging.
+ *
+ * @note: Percentage in format 0.0f to 1.0f.
+ *
+ * This value represents a percentage of the total scan range where the main target
+ * is expected to be centered. For example, a value of `0.7f` means the target should
+ * be positioned at 70% of the scan range from the starting point.
+ */
+#define AUTO_RANGE_TARGET_CENTER_AT 0.7f
+
+/**
+ * @def AUTO_RANGE_BOUNDARY_DELTA
+ * @brief Defines the margin around the target center for auto-ranging boundaries.
+ *
+ * @note: Percentage in format 0.0f to 1.0f.
+ *
+ * This value determines the range expansion around the expected target center,
+ * setting lower and upper limits for auto-ranging. A higher value increases
+ * the tolerance around the target, allowing for more variation in its position without
+ * retriggering the auto-ranging process.
+ */
+#define AUTO_RANGE_BOUNDARY_DELTA 0.2f
+
+/**
+ * ============================
  * DSP Algorithm Configuration
  * ============================
  */
