@@ -111,12 +111,6 @@ int main(void)
   MX_DAC1_Init();
   /* USER CODE BEGIN 2 */
 
-  printf("Sonar board started\n");
-
-  HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
-
-  printf("DAC started\n");
-
   PingSonar &sonar = PingSonar::GetInstance();
   sonar.init();
 
@@ -129,8 +123,6 @@ int main(void)
   sonar.refresh();
 
   uint32_t lastRefresh = HAL_GetTick();
-
-  uint32_t dacVal = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -146,17 +138,6 @@ int main(void)
     {
       HAL_IWDG_Refresh(&hiwdg);
       lastRefresh = HAL_GetTick();
-      /** TODO: Add bias adjust using DAC */
-      /** Set 1.65V on channel 1 */
-      HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dacVal);
-      if (dacVal < 2866)
-      {
-        dacVal += 10;
-      }
-      else
-      {
-        dacVal = 1228;
-      }
     }
   }
   /* USER CODE END 3 */

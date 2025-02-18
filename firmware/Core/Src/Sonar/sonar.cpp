@@ -1,5 +1,7 @@
-#include "adc.h"
 #include "main.h"
+
+#include "adc.h"
+#include "dac.h"
 #include "opamp.h"
 #include "tim.h"
 
@@ -42,6 +44,12 @@ void PingSonar::init()
     Error_Handler();
   }
   if (HAL_OPAMP_Start(&hopamp4) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Enable the DAC for bias */
+  if (HAL_DAC_Start(&hdac1, DAC_CHANNEL_1) != HAL_OK)
   {
     Error_Handler();
   }
@@ -99,6 +107,7 @@ void PingSonar::update()
 
   if (_machineState == SonarMachineState::DATA_READY) {
     /** Signal Processing */
+    adjustSignalBias();
     processProfile();
 
     ++_pingNumber;
@@ -311,7 +320,7 @@ void PingSonar::adjustSonarForRange()
  *
  * @exception Calls `Error_Handler()` if OPAMP self-calibration fails. Triggering a IWDG reset.
  */
-void PingSonar::adjustReceiveChainGain() const
+void PingSonar::adjustReceiveChainGain()
 {
   HAL_OPAMP_Stop(&hopamp2);
   HAL_OPAMP_Stop(&hopamp3);
@@ -369,6 +378,41 @@ void PingSonar::adjustReceiveChainGain() const
   HAL_OPAMP_Start(&hopamp2);
   HAL_OPAMP_Start(&hopamp3);
   HAL_OPAMP_Start(&hopamp4);
+
+  /** When PGA gains are changed we need to adjust the sonar bias */
+  adjustSignalBias();
+}
+
+/**
+ * @brief Adjusts the receive chain bias to keep signal centered on the ideal ADC range.
+ */
+void PingSonar::adjustSignalBias()
+{
+  constexpr uint32_t MAX_DAC = 4095U;
+
+  /** Get current bias voltage */
+  uint32_t dac = HAL_DAC_GetValue(&hdac1, DAC_CHANNEL_1);
+
+  uint16_t window_size = _sampleCycles >> 1U;
+  /** We dont need to much points */
+  if (window_size > DAC_BIAS_ADJUST_MEAN_WINDOW_SIZE)
+  {
+    window_size = DAC_BIAS_ADJUST_MEAN_WINDOW_SIZE;
+  }
+  /** Only the remaining from the bufferr */
+  uint16_t start_index = _sampleCycles - window_size;
+  uint8_t avg = u8_fast_mean(&_DMABufferADC4[start_index], window_size);
+
+  /** We need to adjust the bias to the center proportional to the error */
+  if (avg > DESIRED_SIGNAL_CENTER_VALUE) {
+    uint8_t diff  = avg - DESIRED_SIGNAL_CENTER_VALUE;
+    dac = (dac > diff) ? dac - diff : 0U;
+  } else {
+    uint8_t diff  = DESIRED_SIGNAL_CENTER_VALUE - avg;
+    dac = (dac + diff > MAX_DAC) ? MAX_DAC : dac + diff;
+  }
+
+  HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, dac);
 }
 
 /**
