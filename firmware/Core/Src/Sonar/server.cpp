@@ -237,7 +237,6 @@ uint8_t SonarServer::router(ping_message &msg)
       sonar.setRangeScanStart(request.scan_start());
       /** TODO: Add NACK in case of length validation fail */
       sonar.setRangeScanLength(request.scan_length());
-      sonar.asyncRefresh();
       return 0;
     }
     case Ping1dId::RANGE: {
@@ -256,7 +255,6 @@ uint8_t SonarServer::router(ping_message &msg)
     case Ping1dId::SET_SPEED_OF_SOUND: {
       ping1d_set_speed_of_sound request = reinterpret_cast<ping1d_set_speed_of_sound &>(msg);
       sonar.setSpeedOfSound(request.speed_of_sound());
-      sonar.asyncRefresh();
       return 0;
     }
     case Ping1dId::SPEED_OF_SOUND: {
@@ -274,7 +272,6 @@ uint8_t SonarServer::router(ping_message &msg)
     case Ping1dId::SET_MODE_AUTO: {
       ping1d_set_mode_auto request = reinterpret_cast<ping1d_set_mode_auto &>(msg);
       sonar.setIsModeAuto(request.mode_auto());
-      sonar.asyncRefresh();
       return 0;
     }
     case Ping1dId::MODE_AUTO: {
@@ -310,7 +307,6 @@ uint8_t SonarServer::router(ping_message &msg)
       ping1d_set_gain_setting request = reinterpret_cast<ping1d_set_gain_setting &>(msg);
       /** TODO: Add NACK in case of gain validation fail */
       sonar.setGainSetting(request.gain_setting());
-      sonar.asyncRefresh();
       return 0;
     }
     case Ping1dId::GAIN_SETTING: {
@@ -420,7 +416,6 @@ uint8_t SonarServer::router(ping_message &msg)
       sonar.setNProfilePoints(request.number_of_points());
       sonar.setProfileNormalized(request.normalization_enabled());
       sonar.setProfileEnhanced(request.enhance_enabled());
-      sonar.asyncRefresh();
       return 0;
     }
     case Ping1dId::OSS_PROFILE_CONFIGURATION: {

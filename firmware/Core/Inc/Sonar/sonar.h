@@ -31,6 +31,14 @@ enum class SonarMachineState : uint8_t
   PROFILE_GENERATED,  /**< Processed data (profile) is ready to be transmitted to the host. */
 };
 
+enum class SonarRefreshType : uint8_t
+{
+  NONE = 0,   /**< No refresh required. */
+  RANGE,      /**< Refresh required for operational parameters. */
+  GAINS,      /**< Refresh required for gain settings. */
+  BOTH        /**< Refresh required for both operational parameters and gain settings. */
+};
+
 class PingSonar
 {
 public:
@@ -44,19 +52,18 @@ public:
   void init();
   void update();
   void refresh();
-  void asyncRefresh();
+  void asyncRefresh(SonarRefreshType type);
   void measure(SonarMeasurementType type);
 
   void oneShot();
   void shotComplete();
-  void processProfile();
 
 public:
   uint32_t transmitDuration() const { return _transmitDuration; }
   uint16_t pingNumber() const { return _pingNumber; }
-  uint16_t lockedDistance() const { return _lockedDistance; }
+  uint16_t lockedDistance() const { return _lockedDistanceAvg; }
   uint16_t dataEndIndex() const { return _sampleCycles; }
-  uint8_t lockedConfidence() const { return _lockedConfidence; }
+  uint8_t lockedConfidence() const { return _lockedConfidenceAvg; }
 
   void setRangeScanStart(uint32_t scanStart);
   uint32_t rangeScanStart() const { return _rangeScanStart; }
@@ -101,6 +108,12 @@ protected:
   PingSonar() = default;
 
 protected:
+  void processProfile();
+  void processAutoRange();
+  void updateRangeBoundaries();
+  void resetEstimationsAverage();
+  void updateEstimationsAverage();
+
   void adjustSonarForRange();
   void adjustADCForRange();
   void adjustTransmitForRange();
@@ -119,11 +132,9 @@ private:
 
   SonarMachineState _machineState = SonarMachineState::IDLE;                /**< Current sonar device state. */
   SonarMeasurementType _requestedMeasurement = SonarMeasurementType::NONE;  /**< Current in progress measurement */
+  SonarRefreshType _refreshRequired = SonarRefreshType::NONE;               /**< Flag to indicate if the sonar needs to be refreshed. */
 
-  uint8_t _refreshRequired = 0U;         /**< Flag to indicate if the sonar needs to be refreshed. */
   uint32_t _lastMeasurementTick = 0U; /**< Last time a continuous measurement was triggered. */
-
-  uint16_t _controlFlags = 0U;        /**< Control flags for the sonar device. */
 
   /** Sonar Operational Parameters */
 
@@ -145,9 +156,18 @@ private:
   /** - Get by Host */
 
   uint32_t _pingNumber = 0U;         /**< Count of pulses/measurements since boot. */
-  uint32_t _lockedDistance = 0U;     /**< Distance measurement locked. [mm] */
   uint16_t _transmitDuration = 0U;   /**< Duration of the single acoustic pulse. [us] */
+
+  uint32_t _lockedDistance = 0U;     /**< Distance measurement locked. [mm] */
   uint8_t _lockedConfidence = 0U;    /**< Confidence of the distance lock. [0-100] */
+
+  uint32_t _lockedDistanceAvg = 0U;  /**< Average of the locked distance. [mm] */
+  uint8_t _lockedConfidenceAvg = 0U; /**< Average of the locked confidence. [0-100] */
+
+  /** These accumulators are used for smoothing the values */
+  uint32_t _lockedDistanceAcc = 0U;
+  uint32_t _lockedConfidenceAcc = 0U;
+  uint16_t _lockedValuesWindowSize = 4U;
 
   /** Internal side effects utils derived from hardware current adjust */
 
@@ -155,7 +175,16 @@ private:
   float _mmPerSamplePoint = 0.0f;   /**< Length of a single sampling in the ADC buffer [mm]. */
   float _realRangeScanStart = 0.0f; /**< The real scan start length set on TIM2 [mm] */
   float _sampleInterval = 0.0f;     /**< The interval between samples [us] */
-  uint16_t _sampleCycles = 0U;   /**< Total number of samples captured by the ADC */
+  uint16_t _sampleCycles = 0U;      /**< Total number of samples captured by the ADC */
+
+  /** Auto range internals tracking */
+
+  uint32_t _lowerRangeBoundary = 0U;  /**< Lower boundary of the auto range scan. */
+  uint32_t _upperRangeBoundary = 0U;  /**< Upper boundary of the auto range scan. */
+
+  uint16_t _autoRangeLockingFor = 0U;     /**< Counter for the auto range locking cycles. */
+  uint8_t _autoRangeSearching = 0U;      /**< Flag to indicate if the auto range is currently searching. */
+  uint8_t _signalBiasStable = 0U;        /**< Flag to indicate if the signal bias is stable. */
 
   /** Sonar Memory Buffers */
 
