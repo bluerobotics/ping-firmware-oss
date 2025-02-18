@@ -24,6 +24,7 @@ target_sources(stm32cubemx INTERFACE
     ../../Core/Src/main.cpp
     ../../Core/Src/gpio.c
     ../../Core/Src/adc.c
+    ../../Core/Src/dac.c
     ../../Core/Src/dma.c
     ../../Core/Src/iwdg.c
     ../../Core/Src/opamp.c
@@ -46,6 +47,8 @@ target_sources(stm32cubemx INTERFACE
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c.c
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c_ex.c
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_exti.c
+    ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_dac.c
+    ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_dac_ex.c
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_iwdg.c
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_opamp.c
     ../../Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_opamp_ex.c
