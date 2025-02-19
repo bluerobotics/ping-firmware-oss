@@ -1,6 +1,18 @@
 #include "DSP/dsp.h"
 
-/** TODO: Need docs */
+
+/**
+ * @brief Computes the half-square value of each 8-bit unsigned integer in the buffer.
+ *
+ * This function efficiently processes an array of 8-bit unsigned integers (`buffer`) by computing
+ * the square of each value, scaled by half, using block processing with loop unrolling.
+ * The result is clamped to the valid 8-bit range using ARM-specific saturation instructions.
+ *
+ * @param[in,out] buffer Pointer to the buffer containing the 8-bit unsigned integers.
+ *                       The processed values overwrite the original buffer.
+ * @param[in] size The number of elements in the buffer. The function processes elements in blocks of 8.
+ *
+ */
 void u8_fast_half_square(volatile uint8_t *buffer, uint16_t size)
 {
   /** Operation register and saturation result */
