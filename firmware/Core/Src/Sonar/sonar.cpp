@@ -105,6 +105,7 @@ void PingSonar::update()
 
   /** Trigger section */
 
+  /** TODO: Add multi sampling to avoid control being stuck when user selects slow sampling interval */
   const bool intervalExceeded = _isModeContinuous && ((HAL_GetTick() - _lastMeasurementTick) >= _pingInterval);
   if (
     _machineState == SonarMachineState::IDLE &&
