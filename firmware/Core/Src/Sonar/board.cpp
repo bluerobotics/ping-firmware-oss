@@ -41,11 +41,9 @@ void SonarBoard::goToBootLoader()
  */
 uint16_t SonarBoard::powerVoltage5MilliVolt()
 {
-  /** Channel 8 - Rank 1 */
+  /** Channel 8 - Rank 1 (12-bit with 17k78/10k divider)*/
 
-  /** TODO: Linearize Voltage 5V measurement (17k78/10k) */
-
-  return _DMABufferADC1[0];
+  return (uint16_t)(( _DMABufferADC1[0] / 4095.0f) * 3300.0f * 2.78f);
 }
 
 /**
@@ -56,9 +54,9 @@ uint16_t SonarBoard::PCBTemperatureCC()
 {
   /** Channel 3 - Rank 2 */
 
-  /** TODO: Add linearization of PCB Temperature Sensor */
+  /** TODO: Simple approximation need lab testing */
 
-  return _DMABufferADC1[1];
+  return _DMABufferADC1[1] * 2.01754;
 }
 
 /**
@@ -69,7 +67,14 @@ uint16_t SonarBoard::processorTemperatureCC()
 {
   /** Channel Temperature Sensor - Rank 3 */
 
-  /** TODO: Add linearization of Processor Temperature Sensor */
+  uint16_t adcValue = _DMABufferADC1[2];
 
-  return _DMABufferADC1[2];
+  /** Retrieve calibration values from system memory */
+  uint16_t cal1 = *reinterpret_cast<uint16_t*>(0x1FFFF7B8); /** TS_CAL1 @ 30°C */
+  uint16_t cal2 = *reinterpret_cast<uint16_t*>(0x1FFFF7C2); /** TS_CAL2 @ 110°C */
+
+  /** temperature in hundredths of a degree */
+  int32_t temperature = ((adcValue - cal1) * (11000 - 3000)) / (cal2 - cal1) + 3000;
+
+  return (uint16_t)temperature;
 }
