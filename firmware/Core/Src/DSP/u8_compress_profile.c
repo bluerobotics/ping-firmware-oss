@@ -1,6 +1,19 @@
 #include "DSP/dsp.h"
 
-/** TODO: Add docs */
+/**
+ * @brief Compresses an 8-bit unsigned integer buffer by selecting the maximum value in each segment.
+ *
+ * This function reduces the size of the input buffer by dividing it into `out_size` segments,
+ * each containing approximately `in_size / out_size` elements. The maximum value from each
+ * segment is stored in the output buffer.
+ *
+ * @param[in] input Pointer to the input buffer containing 8-bit unsigned integers.
+ * @param[in] in_size The number of elements in the input buffer.
+ * @param[out] output Pointer to the output buffer where the compressed values will be stored.
+ * @param[in] out_size The desired number of elements in the output buffer. If `out_size` is
+ * greater than `in_size`, it will be clamped to `in_size`.
+ *
+ */
 void u8_compress_profile(volatile uint8_t *input, uint16_t in_size, volatile uint8_t *output, uint16_t out_size)
 {
   /** TODO: Need optimize this */
