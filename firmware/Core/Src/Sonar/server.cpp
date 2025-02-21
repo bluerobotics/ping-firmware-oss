@@ -449,6 +449,7 @@ uint8_t SonarServer::router(ping_message &msg)
  */
 void SonarServer::updateMeasurement()
 {
+  /** TODO: Change this to use ping1d_profile message as a buffer instead of direct byte addresing */
   PingSonar &sonar = PingSonar::GetInstance();
 
   _BufferProfile[0] = 'B';
@@ -485,6 +486,7 @@ uint8_t SonarServer::transmitMeasurement(SonarMeasurementType type)
 
   PingSonar &sonar = PingSonar::GetInstance();
 
+  /** TODO: Change this to use ping1d_profile message as a buffer instead of direct byte addresing */
   switch (type) {
     case SonarMeasurementType::DISTANCE_SIMPLE: {
       /** Message Size and ID */
