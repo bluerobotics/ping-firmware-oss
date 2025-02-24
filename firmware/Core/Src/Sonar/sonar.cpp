@@ -404,7 +404,10 @@ void PingSonar::processAutoRange()
       _autoRangeLockingFor = 0U;
       resetEstimationsAverage();
 
-      if (_rangeScanLength < AUTO_RANGE_SWEEP_END_MM) {
+      if (
+        _rangeScanLength < AUTO_RANGE_SWEEP_END_MM &&
+        (_rangeScanLength + AUTO_RANGE_SWEEP_STEP_MM) < _maxScanLength
+      ) {
         setRangeScanLength(_rangeScanLength + AUTO_RANGE_SWEEP_STEP_MM);
         asyncRefresh(SonarRefreshType::RANGE);
       } else {
@@ -852,8 +855,8 @@ void PingSonar::setRangeScanStart(uint32_t scanStart)
  */
 uint8_t PingSonar::setRangeScanLength(uint32_t scanLength)
 {
-  /** Scan Length must be greater than 1000mm */
-  if (scanLength < 1000U)
+  /** Clamp values */
+  if (scanLength < 1000U || scanLength > _maxScanLength)
   {
     return HAL_ERROR;
   }
@@ -873,6 +876,13 @@ void PingSonar::setSpeedOfSound(uint32_t speedOfSound)
 {
   _speedOfSound = speedOfSound;
   _halfSpeedOfSound = (float)speedOfSound / 2.0f;
+  _maxScanLength = (ADC4_DMA_BUFFER_SIZE / MIN_SAMPLING_FREQUENCY_HZ) * _halfSpeedOfSound;
+
+  /** Clamp the scan length to maximum allowed */
+  if (_rangeScanLength > _maxScanLength)
+  {
+    _rangeScanLength = _maxScanLength;
+  }
 
   asyncRefresh(SonarRefreshType::RANGE);
 }

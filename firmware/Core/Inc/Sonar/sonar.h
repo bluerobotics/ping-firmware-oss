@@ -176,6 +176,7 @@ private:
   float _realRangeScanStart = 0.0f; /**< The real scan start length set on TIM2 [mm] */
   float _sampleInterval = 0.0f;     /**< The interval between samples [us] */
   uint16_t _sampleCycles = 0U;      /**< Total number of samples captured by the ADC */
+  uint32_t _maxScanLength = 0U;     /**< Maximum scan length based on the speed of sound and maximum sampling points. */
 
   /** Auto range internals tracking */
 

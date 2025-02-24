@@ -108,7 +108,7 @@
  * @note This buffer typically occupies a significant portion of the available RAM.
  *       Use caution when modifying this value to avoid memory issues.
  */
-#define ADC4_DMA_BUFFER_SIZE (61200 - PROFILE_MSG_BUFFER_SIZE)
+#define ADC4_DMA_BUFFER_SIZE (61200U - PROFILE_MSG_BUFFER_SIZE)
 
 /**
  * ============================
