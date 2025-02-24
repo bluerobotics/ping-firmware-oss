@@ -649,6 +649,12 @@ void PingSonar::adjustRepetitionsForADC(uint32_t samplingFrequencyHz)
   /** Make sure repetitions are integer multiple of 8 */
   repetitions = (repetitions >> 3U) << 3U;
 
+  /** We need to remove the trash when expanding the buffer */
+  if (repetitions > _sampleCycles)
+  {
+    memset((void*)&_DMABufferADC4[_sampleCycles], 0U, repetitions - _sampleCycles);
+  }
+
   /** We use this as side effect to later calculate locked distance */
   _mmPerSamplePoint = 2.0f * mmPerEchoSample;
   _sampleCycles = repetitions;
