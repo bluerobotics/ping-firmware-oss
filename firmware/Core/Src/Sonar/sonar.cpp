@@ -444,6 +444,7 @@ void PingSonar::adjustSonarForRange()
 {
   /** Since we use this in a lot of place we just calculate here */
   _halfSpeedOfSound = (float)_speedOfSound / 2.0f;
+  _maxScanLength = (ADC4_DMA_BUFFER_SIZE / MIN_SAMPLING_FREQUENCY_HZ) * _halfSpeedOfSound;
 
   /** The following functions have side effects. Be cautious when changing their order. */
   adjustTransmitForRange();
