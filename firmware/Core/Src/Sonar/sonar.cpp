@@ -248,6 +248,13 @@ void PingSonar::processProfile()
 {
   SonarServer &server = SonarServer::GetInstance();
 
+  /**
+   * TODO: We can in future add a next filtering step here to not only rely on hardware filters and have more control on
+   * the dynamics of the signal processing.
+   * Would be good to use some narrow frequency band filter to lock on the transmit frequency. Candidates could be an
+   * Eliptical or Goertzel filter. Implemented as a IIR probably.
+   */
+
   /** Start cleaning buffer and preparing for search algorithms */
 
   /** We aim for around 350 us for the steady state window */
