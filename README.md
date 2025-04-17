@@ -315,6 +315,12 @@ If using the UART interface, you can use the **stm32flash** tool to flash the fi
 stm32flash -v -g 0x0 -b 115200 -w build/Release/ping-firmware-oss.hex <your device port>
 ```
 
+It's also possible to flash the firmware via CMake to put the device in **bootloader mode**:
+
+```sh
+cmake -B build -DFLASH_DEVICE=/dev/ttyUSB0 && cmake --build build --config Release --parallel --target flash
+```
+
 Make sure to have the device in bootloader mode before flashing the firmware and that `<your device port>` is changed to the correct port for the device, by example in a linux environment it could be `/dev/ttyUSB0`.
 
 ### Configuration
