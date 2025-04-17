@@ -55,9 +55,8 @@ void SonarServer::processRxBuffer()
   /** Consume till both are symmetric or tx is full */
   while (_UARTRxBufferParsed != _UARTRxBufferReceived && _pendingTxSize == 0)
   {
-    PingParser::State parse_result = pingParser.parseByte(_UARTBufferRx[_UARTRxBufferParsed]);
-
-    _UARTRxBufferParsed = (_UARTRxBufferParsed + 1) % UART_RX_BUFFER_SIZE;
+    _UARTRxBufferParsed = 1U + (_UARTRxBufferParsed) % UART_RX_BUFFER_SIZE;
+    PingParser::State parse_result = pingParser.parseByte(_UARTBufferRx[_UARTRxBufferParsed - 1U]);
 
     if (parse_result == PingParser::State::NEW_MESSAGE) {
       _pendingTxSize = router(pingParser.rxMessage);
