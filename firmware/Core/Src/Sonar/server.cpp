@@ -215,8 +215,18 @@ uint8_t SonarServer::router(ping_message &msg)
       return 0;
     }
     case Ping1dId::SET_DEVICE_ID: {
+      common_ack response(_UARTTxBufferHead);
+      uint16_t pending = decrementTxAvailable(response.msgDataLength());
+      if (pending != 0) {
+        return pending;
+      }
+
       ping1d_set_device_id request = reinterpret_cast<ping1d_set_device_id &>(msg);
       sonar.setDeviceID(request.device_id());
+
+      response.set_source_device_id(sonar.deviceID());
+      response.set_acked_id(request.message_id());
+      response.updateChecksum();
       return 0;
     }
     case Ping1dId::DEVICE_ID: {
