@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-from brping import Ping1D, definitions
+from brping import Ping1D, definitions, pingmessage
 import subprocess
 import time
 
@@ -30,7 +30,10 @@ except subprocess.CalledProcessError as e:
     myPing = Ping1D()
     myPing.connect_serial(args.device, args.baudrate)
 
-    myPing.control_goto_bootloader()
+    # Make sure the device is in bootloader mode
+    m = pingmessage.PingMessage(definitions.PING1D_GOTO_BOOTLOADER)
+    m.pack_msg_data()
+    myPing.write(m.msg_data)
     try:
         print(myPing.wait_message([definitions.COMMON_ACK, definitions.COMMON_NACK]))
     except:
