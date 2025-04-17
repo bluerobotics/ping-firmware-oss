@@ -300,6 +300,7 @@ Before building the firmware, ensure that the necessary dependencies are install
 The firmware is compiled using **CMake**. Follow these steps to build it:
 
 ```sh
+git submodule update --init --recursive
 cd firmware
 cmake -B build
 cmake --build build --config Release --parallel
