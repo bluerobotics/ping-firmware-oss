@@ -108,7 +108,7 @@
  * @note This buffer typically occupies a significant portion of the available RAM.
  *       Use caution when modifying this value to avoid memory issues.
  */
-#define ADC4_DMA_BUFFER_SIZE (61200 - PROFILE_MSG_BUFFER_SIZE)
+#define ADC4_DMA_BUFFER_SIZE ((61000U / 2U) + 200U - PROFILE_MSG_BUFFER_SIZE)
 
 /**
  * ============================
@@ -128,7 +128,7 @@
  *
  * @note It is recommended to use integer multiples of the drive frequency.
  */
-#define MIN_SAMPLING_FREQUENCY_HZ (4U * DRIVE_FREQUENCY_HZ)
+#define MIN_SAMPLING_FREQUENCY_HZ (2U * DRIVE_FREQUENCY_HZ)
 
 /**
  * @def MAX_SAMPLING_FREQUENCY_HZ
