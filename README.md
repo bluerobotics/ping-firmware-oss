@@ -258,15 +258,15 @@ Code is organized as follows:
 
 > The Sonar Module is responsible for the core functionality of the echo sounder. It manages the entire echo capture sequence—generating transmit pulses, handling echo reception, running digital signal processing (DSP), and providing real-time updates. It centers around the **PingSonar** class in sonar.cpp.
 
-1. **Board Module**
+2. **Board Module**
 
 > The Board Module is responsible mainly to manage the sensing part of the sonar, reading the supply voltage, PCB temperature, and internal processor temperature. It also have some utilities that lies around the way the sonar PCB is made, it being mainly the **go to bootloader** logic.
 
-1. **Server Module**
+3. **Server Module**
 
 > The Server Module is responsible for handling the communication between the sonar and the host computer. It manages the serial communication, including receiving commands and sending data back to the host. It centers around the **PingServer** class in server.cpp.
 
-2. **DSP Module**
+4. **DSP Module**
 
 > The DSP Module is responsible for processing the echo signal received by the sonar. Not like other modules it consists of a series of optimized functions that are used by the **PingSonar** class to process the echo signal. It is by default stored in the CCM (Core Coupled Memory) of the MCU to ensure that it can be executed at the highest speed possible.
 
