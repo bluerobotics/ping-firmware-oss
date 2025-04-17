@@ -7,6 +7,20 @@
  */
 
 /**
+ * @def MAX_BUFFERS_USAGE_SIZE
+ * @brief Defines the maximum size of system RAM that major storage buffers can occupy.
+ */
+#define MAX_BUFFERS_USAGE_SIZE (60U * 1024U)
+
+/**
+ * @brief Defines if the system should maximize the buffer usage size or leave more RAM for other parts of the firmware
+ * to use. If defined, maximum resolution and range will be achieved but the system will run on the RAM limits, not
+ * allowing to much for user to customize the firmware. If commented out, the system will leave more RAM for other
+ * parts of the firmware to use, but the maximum resolution and range will be reduced.
+ */
+#define USE_MAX_BUFFER_USAGE_SIZE
+
+/**
  * @def IWDG_REFRESH_INTERVAL_MS
  * @brief Defines the interval in milliseconds at which the IWDG is refreshed.
  */
@@ -90,6 +104,12 @@
 #define PROFILE_MSG_BUFFER_SIZE 200U
 
 /**
+ * @def UART_BUFFERS_USAGE_SIZE
+ * @brief Calculates the total size of the UART buffers used in the system.
+ */
+#define UART_BUFFERS_USAGE_SIZE (UART_RX_BUFFER_SIZE + UART_TX_BUFFER_SIZE + PROFILE_MSG_BUFFER_SIZE)
+
+/**
  * ============================
  * DMA Buffers
  * ============================
@@ -108,7 +128,11 @@
  * @note This buffer typically occupies a significant portion of the available RAM.
  *       Use caution when modifying this value to avoid memory issues.
  */
-#define ADC4_DMA_BUFFER_SIZE (61200 - PROFILE_MSG_BUFFER_SIZE)
+#if defined(USE_MAX_BUFFER_USAGE_SIZE)
+#define ADC4_DMA_BUFFER_SIZE (MAX_BUFFERS_USAGE_SIZE - UART_BUFFERS_USAGE_SIZE)
+#else
+#define ADC4_DMA_BUFFER_SIZE (MAX_BUFFERS_USAGE_SIZE - UART_BUFFERS_USAGE_SIZE) / 2U
+#endif
 
 /**
  * ============================
@@ -128,7 +152,7 @@
  *
  * @note It is recommended to use integer multiples of the drive frequency.
  */
-#define MIN_SAMPLING_FREQUENCY_HZ (4U * DRIVE_FREQUENCY_HZ)
+#define MIN_SAMPLING_FREQUENCY_HZ (2U * DRIVE_FREQUENCY_HZ)
 
 /**
  * @def MAX_SAMPLING_FREQUENCY_HZ
