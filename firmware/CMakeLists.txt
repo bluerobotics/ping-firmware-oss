@@ -42,14 +42,8 @@ add_executable(${CMAKE_PROJECT_NAME})
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
-# Add ping-cpp lib
-set(PING_CPP_BUILD_DIR ${CMAKE_BINARY_DIR}/ping-cpp)
-add_custom_target(build-ping-cpp ALL
-    COMMAND ${CMAKE_COMMAND} -B${PING_CPP_BUILD_DIR} -S${CMAKE_SOURCE_DIR}/Lib/ping-cpp -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
-    COMMAND ${CMAKE_COMMAND} --build ${PING_CPP_BUILD_DIR} --config ${CMAKE_BUILD_TYPE}
-    COMMENT "Building ping-cpp with the host compiler"
-)
-add_dependencies(${CMAKE_PROJECT_NAME} build-ping-cpp)
+# Include ping-cpp message directory
+add_subdirectory(${CMAKE_SOURCE_DIR}/Lib/ping-cpp/src/message)
 
 # Link directories setup
 target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
@@ -81,7 +75,6 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined include paths
-    "Lib/ping-cpp/src/message" # Generated headers from ping-cpp
 )
 
 # Add project symbols (macros)
@@ -90,10 +83,11 @@ target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
 )
 
 # Add linked libraries
-target_link_libraries(${CMAKE_PROJECT_NAME}
+target_link_libraries(
+    ${CMAKE_PROJECT_NAME}
+PRIVATE
     stm32cubemx
-
-    # Add user defined libraries
+    PING_MESSAGES
 )
 
 # Create binary and hex files
