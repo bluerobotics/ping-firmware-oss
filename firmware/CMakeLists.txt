@@ -99,3 +99,14 @@ add_custom_command(
     WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
     COMMENT "Creating binary and hex file"
 )
+
+if(NOT DEFINED FLASH_DEVICE)
+    set(FLASH_DEVICE "/dev/ttyUSB0")
+endif()
+
+# Add custom target for flashing the firmware
+add_custom_target(flash
+    DEPENDS ${CMAKE_PROJECT_NAME}
+    COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/tools/flash_helper.py --hex ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.hex --device ${FLASH_DEVICE}
+    COMMENT "Flashing firmware using flash_helper.py with " ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}.hex "and device " ${FLASH_DEVICE}
+)
