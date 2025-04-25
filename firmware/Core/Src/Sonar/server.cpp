@@ -578,6 +578,30 @@ uint16_t SonarServer::computeCheckSum(uint8_t *buffer, uint16_t size)
 }
 
 /**
+ * @brief Creates and transmits a NACK message with the given text
+ * @param message The message to include in the NACK
+ * @param message_id The ID of the message being NACKed
+ * @return Zero if successful, otherwise the amount of bytes pending to be written
+ */
+uint8_t SonarServer::sendNackMessage(const char* message, uint16_t message_id)
+{
+  const auto message_length = strlen(message);
+  common_nack response_nack(_UARTTxBufferHead, message_length);
+  uint16_t pending_nack = decrementTxAvailable(response_nack.msgDataLength());
+  if (pending_nack != 0) {
+      return pending_nack;
+  }
+
+  for (uint16_t i = 0; i < message_length; i++) {
+      response_nack.set_nack_message_at(i, message[i]);
+  }
+  response_nack.set_source_device_id(PingSonar::GetInstance().deviceID());
+  response_nack.set_nacked_id(message_id);
+  response_nack.updateChecksum();
+  return 0;
+}
+
+/**
  * ============================
  * Getters / Setters
  * ============================

@@ -42,6 +42,7 @@ public:
 
   void updateMeasurement();
   uint8_t transmitMeasurement(SonarMeasurementType type);
+  uint8_t sendNackMessage(const char* message, uint16_t message_id);
 
 public:
   void awaitServerTxState(SonarServerTransmissionState state, uint16_t retries);
