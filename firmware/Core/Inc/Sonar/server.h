@@ -99,3 +99,17 @@ private:
   uint8_t _UARTBufferTx[UART_TX_BUFFER_SIZE];             /**< Buffer for transmitted UART data. */
   uint8_t _BufferProfile[36U + PROFILE_MSG_BUFFER_SIZE];  /**< Auxiliary profile storage for fast scan / transmit */
 };
+
+class AckResponseHandler {
+public:
+  AckResponseHandler(uint8_t* txBufferHead, uint16_t message_id);
+  ~AckResponseHandler();
+
+  uint16_t pending() const;
+  uint16_t abort(const char* errorMessage);
+private:
+  common_ack _response;
+  const uint16_t _message_id;
+  bool _aborted;
+  uint16_t _pending;
+};
