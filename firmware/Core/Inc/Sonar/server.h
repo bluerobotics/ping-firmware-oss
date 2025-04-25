@@ -46,6 +46,7 @@ public:
 public:
   void awaitServerTxState(SonarServerTransmissionState state, uint16_t retries);
   uint16_t decrementTxAvailable(uint16_t decrement);
+  void incrementTxAvailable(uint16_t increment);
 
   /** Getters / Setters */
 
