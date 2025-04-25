@@ -641,6 +641,20 @@ uint16_t SonarServer::decrementTxAvailable(uint16_t decrement)
 }
 
 /**
+ * @brief Used to inform server that a certain amount of bytes have been freed from the TX buffer.
+ * @param increment The amount to increment.
+ */
+void SonarServer::incrementTxAvailable(uint16_t increment)
+{
+  if (increment + _UARTTxBufferAvailable > UART_TX_BUFFER_SIZE) {
+    increment = UART_TX_BUFFER_SIZE - _UARTTxBufferAvailable;
+  }
+
+  _UARTTxBufferAvailable += increment;
+  _UARTTxBufferHead -= increment;
+}
+
+/**
  * ============================
  * Interruptions
  * ============================
