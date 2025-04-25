@@ -7,6 +7,31 @@
 #include "Sonar/board.h"
 #include "Sonar/server.h"
 
+#define PREPARE_ACK_REQUEST(message_type)                            \
+  AckResponseHandler handler(_UARTTxBufferHead, msg.message_id());   \
+  if (handler.pending() != 0) {                                      \
+    return handler.pending();                                        \
+  }                                                                  \
+  auto &request = reinterpret_cast<message_type&>(msg);
+
+#define ABORT_ACK_REQUEST(message)                                   \
+  handler.abort(message);
+
+#define FINISH_RESPONSE()                                            \
+  response.updateChecksum();
+
+#define PREPARE_RESPONSE(message_type)                               \
+  message_type response(_UARTTxBufferHead);                          \
+  uint16_t pending = decrementTxAvailable(response.msgDataLength()); \
+  if (pending != 0) {                                                \
+    return pending;                                                  \
+  }                                                                  \
+  response.set_source_device_id(sonar.deviceID());
+
+#define FINISH_RESPONSE()                                            \
+  response.updateChecksum();
+
+
 /**
  * @brief Gets the single instance of the SonarServer class.
  * @return A reference to the static SonarServer instance.
@@ -152,199 +177,127 @@ uint8_t SonarServer::router(ping_message &msg)
       return router(msg);
     }
     case CommonId::PROTOCOL_VERSION: {
-      common_protocol_version response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(common_protocol_version);
       response.set_version_major(PROTOCOL_VERSION_MAJOR);
       response.set_version_minor(PROTOCOL_VERSION_MINOR);
       response.set_version_patch(PROTOCOL_VERSION_PATCH);
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case CommonId::DEVICE_INFORMATION: {
-      common_device_information response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(common_device_information);
       response.set_device_type(PING_DEVICE_TYPE);
       response.set_device_revision(PING_DEVICE_REVISION);
       response.set_firmware_version_major(PROTOCOL_VERSION_MAJOR);
       response.set_firmware_version_minor(PROTOCOL_VERSION_MINOR);
       response.set_firmware_version_patch(PROTOCOL_VERSION_PATCH);
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::FIRMWARE_VERSION: {
-      ping1d_firmware_version response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_firmware_version);
       response.set_device_type(PING_DEVICE_TYPE);
       response.set_device_model(PING_DEVICE_MODEL);
       response.set_firmware_version_major(PROTOCOL_VERSION_MAJOR);
       response.set_firmware_version_minor(PROTOCOL_VERSION_MINOR);
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::GENERAL_INFO: {
-      ping1d_general_info response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_general_info);
       response.set_firmware_version_major(PROTOCOL_VERSION_MAJOR);
       response.set_firmware_version_minor(PROTOCOL_VERSION_MINOR);
       response.set_voltage_5(board.powerVoltage5MilliVolt());
       response.set_ping_interval(sonar.pingInterval());
       response.set_gain_setting(sonar.gainSetting());
       response.set_mode_auto(sonar.isModeAuto());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::SET_DEVICE_ID: {
-      common_ack response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      ping1d_set_device_id request = reinterpret_cast<ping1d_set_device_id &>(msg);
+      PREPARE_ACK_REQUEST(ping1d_set_device_id);
       sonar.setDeviceID(request.device_id());
-
-      response.set_source_device_id(sonar.deviceID());
-      response.set_acked_id(request.message_id());
-      response.updateChecksum();
       return 0;
     }
     case Ping1dId::DEVICE_ID: {
-      ping1d_device_id response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
+      PREPARE_RESPONSE(ping1d_device_id);
       response.set_source_device_id(sonar.deviceID());
       response.set_device_id(sonar.deviceID());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::SET_RANGE: {
-      ping1d_set_range request = reinterpret_cast<ping1d_set_range &>(msg);
-
+      PREPARE_ACK_REQUEST(ping1d_set_range);
+      const auto scan_start = sonar.rangeScanStart();
       sonar.setRangeScanStart(request.scan_start());
-      /** TODO: Add NACK in case of length validation fail */
-      sonar.setRangeScanLength(request.scan_length());
+      if (sonar.setRangeScanLength(request.scan_length()) != HAL_OK) {
+        sonar.setRangeScanStart(scan_start);
+        return ABORT_ACK_REQUEST("Range scan length out of range");
+      }
       return 0;
     }
     case Ping1dId::RANGE: {
-      ping1d_range response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_range);
       response.set_scan_start(sonar.rangeScanStart());
       response.set_scan_length(sonar.rangeScanLength());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::SET_SPEED_OF_SOUND: {
-      ping1d_set_speed_of_sound request = reinterpret_cast<ping1d_set_speed_of_sound &>(msg);
+      PREPARE_ACK_REQUEST(ping1d_set_speed_of_sound);
       sonar.setSpeedOfSound(request.speed_of_sound());
       return 0;
     }
     case Ping1dId::SPEED_OF_SOUND: {
-      ping1d_speed_of_sound response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_speed_of_sound);
       response.set_speed_of_sound(sonar.speedOfSound());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::SET_MODE_AUTO: {
-      ping1d_set_mode_auto request = reinterpret_cast<ping1d_set_mode_auto &>(msg);
+      PREPARE_ACK_REQUEST(ping1d_set_mode_auto);
       sonar.setIsModeAuto(request.mode_auto());
       return 0;
     }
     case Ping1dId::MODE_AUTO: {
-      ping1d_mode_auto response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_mode_auto);
       response.set_mode_auto(sonar.isModeAuto());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::SET_PING_INTERVAL: {
-      ping1d_set_ping_interval request = reinterpret_cast<ping1d_set_ping_interval &>(msg);
+      PREPARE_ACK_REQUEST(ping1d_set_ping_interval);
       sonar.setPingInterval(request.ping_interval());
       break;
     }
     case Ping1dId::PING_INTERVAL: {
-      ping1d_ping_interval response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_ping_interval);
       response.set_ping_interval(sonar.pingInterval());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::SET_GAIN_SETTING: {
-      ping1d_set_gain_setting request = reinterpret_cast<ping1d_set_gain_setting &>(msg);
-      /** TODO: Add NACK in case of gain validation fail */
-      sonar.setGainSetting(request.gain_setting());
+      PREPARE_ACK_REQUEST(ping1d_set_gain_setting);
+      if (sonar.setGainSetting(request.gain_setting()) != HAL_OK) {
+        return ABORT_ACK_REQUEST("Gain setting out of range");
+      }
       return 0;
     }
     case Ping1dId::GAIN_SETTING: {
-      ping1d_gain_setting response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_gain_setting);
       response.set_gain_setting(sonar.gainSetting());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::SET_PING_ENABLE: {
-      ping1d_set_ping_enable request = reinterpret_cast<ping1d_set_ping_enable &>(msg);
+      PREPARE_ACK_REQUEST(ping1d_set_ping_enable);
       sonar.setIsPingEnabled(request.ping_enabled());
       return 0;
     }
     case Ping1dId::PING_ENABLE: {
-      ping1d_ping_enable response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_ping_enable);
       response.set_ping_enabled(sonar.isPingEnabled());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::DISTANCE: {
@@ -360,51 +313,27 @@ uint8_t SonarServer::router(ping_message &msg)
       return 0;
     }
     case Ping1dId::TRANSMIT_DURATION: {
-      ping1d_transmit_duration response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_transmit_duration);
       response.set_transmit_duration(sonar.transmitDuration());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::PROCESSOR_TEMPERATURE: {
-      ping1d_processor_temperature response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_processor_temperature);
       response.set_processor_temperature(board.processorTemperatureCC());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::PCB_TEMPERATURE: {
-      ping1d_pcb_temperature response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_pcb_temperature);
       response.set_pcb_temperature(board.PCBTemperatureCC());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::VOLTAGE_5: {
-      ping1d_voltage_5 response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_voltage_5);
       response.set_voltage_5(board.powerVoltage5MilliVolt());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     case Ping1dId::GOTO_BOOTLOADER: {
@@ -420,25 +349,18 @@ uint8_t SonarServer::router(ping_message &msg)
       return 0;
     }
     case Ping1dId::SET_OSS_PROFILE_CONFIGURATION: {
-      ping1d_set_oss_profile_configuration request = reinterpret_cast<ping1d_set_oss_profile_configuration &>(msg);
-
+      PREPARE_ACK_REQUEST(ping1d_set_oss_profile_configuration);
       sonar.setNProfilePoints(request.number_of_points());
       sonar.setProfileNormalized(request.normalization_enabled());
       sonar.setProfileEnhanced(request.enhance_enabled());
       return 0;
     }
     case Ping1dId::OSS_PROFILE_CONFIGURATION: {
-      ping1d_oss_profile_configuration response(_UARTTxBufferHead);
-      uint16_t pending = decrementTxAvailable(response.msgDataLength());
-      if (pending != 0) {
-        return pending;
-      }
-
-      response.set_source_device_id(sonar.deviceID());
+      PREPARE_RESPONSE(ping1d_oss_profile_configuration);
       response.set_number_of_points(sonar.nProfilePoints());
       response.set_normalization_enabled(sonar.isProfileNormalized());
       response.set_enhance_enabled(sonar.isProfileEnhanced());
-      response.updateChecksum();
+      FINISH_RESPONSE();
       return 0;
     }
     default:
@@ -676,6 +598,48 @@ void SonarServer::incrementTxAvailable(uint16_t increment)
 
   _UARTTxBufferAvailable += increment;
   _UARTTxBufferHead -= increment;
+}
+
+/**
+ * @brief Handles the response to a message, sending an ack or nack based on the result of the operation.
+ * @param txBufferHead The buffer to write the response to.
+ * @param message The message to respond to.
+ */
+AckResponseHandler::AckResponseHandler(uint8_t* txBufferHead, uint16_t message_id)
+  : _response(txBufferHead), _message_id(message_id), _aborted(false), _pending(0)
+{
+  _pending = SonarServer::GetInstance().decrementTxAvailable(_response.msgDataLength());
+}
+
+/**
+ * @brief Destructor for the AckResponseHandler class, responsible for sending an ack, if necessary.
+ */
+AckResponseHandler::~AckResponseHandler() {
+  if (_aborted || _pending != 0) {
+    return;
+  }
+  _response.set_source_device_id(PingSonar::GetInstance().deviceID());
+  _response.set_acked_id(_message_id);
+  _response.updateChecksum();
+}
+
+/**
+ * @brief Get the pending amount of bytes.
+ * @return The pending amount of bytes.
+ */
+uint16_t AckResponseHandler::pending() const {
+  return _pending;
+}
+
+/**
+ * @brief Aborts the response to a message.
+ * @param errorMessage The error message to send.
+ * @return The amount of bytes pending to be written.
+ */
+uint16_t AckResponseHandler::abort(const char* errorMessage) {
+  _aborted = true;
+  SonarServer::GetInstance().incrementTxAvailable(_response.msgDataLength());
+  return SonarServer::GetInstance().sendNackMessage(errorMessage, _message_id);
 }
 
 /**
