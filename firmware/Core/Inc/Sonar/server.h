@@ -9,6 +9,10 @@
 #include "config.h"
 #include "Sonar/sonar.h"
 
+#define BUFFER_PROFILE_HEADER_SIZE 34U
+#define BUFFER_PROFILE_CHECKSUM_SIZE 2U
+#define BUFFER_PROFILE_SIZE (BUFFER_PROFILE_HEADER_SIZE + PROFILE_MSG_BUFFER_SIZE + BUFFER_PROFILE_CHECKSUM_SIZE)
+
 /**
  * @enum SonarServerTransmissionState
  * @brief Represents the transmission state of the Sonar server UART TX.
@@ -97,7 +101,7 @@ private:
 
   uint8_t _UARTBufferRx[UART_RX_BUFFER_SIZE];             /**< Buffer for received UART data. */
   uint8_t _UARTBufferTx[UART_TX_BUFFER_SIZE];             /**< Buffer for transmitted UART data. */
-  uint8_t _BufferProfile[36U + PROFILE_MSG_BUFFER_SIZE];  /**< Auxiliary profile storage for fast scan / transmit */
+  uint8_t _BufferProfile[BUFFER_PROFILE_SIZE];  /**< Auxiliary profile storage for fast scan / transmit */
 };
 
 class AckResponseHandler {
