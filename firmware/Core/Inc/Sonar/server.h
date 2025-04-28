@@ -58,6 +58,7 @@ public:
   uint8_t *UARTBufferRx() { return _UARTBufferRx; }
   uint8_t *UARTBufferTx() { return _UARTBufferTx; }
   uint8_t *bufferProfile() { return _BufferProfile; }
+  uint8_t *bufferProfileData() { return _BufferProfile + BUFFER_PROFILE_HEADER_SIZE; }
 
   void setServerTxState(SonarServerTransmissionState state);
   SonarServerTransmissionState serverTxState() const { return _serverTxState; }
