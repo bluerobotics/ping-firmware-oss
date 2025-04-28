@@ -141,7 +141,6 @@ void PingSonar::update()
   if (_machineState == SonarMachineState::PROFILE_GENERATED) {
     /** Transmit Phase */
     SonarServer &server = SonarServer::GetInstance();
-    server.updateMeasurement();
 
     /** First send required measure if needed */
     if (_requestedMeasurement != SonarMeasurementType::NONE) {
@@ -321,7 +320,7 @@ void PingSonar::processProfile()
   }
 
   /** Last step is compress the profile data for user */
-  u8_compress_profile(_DMABufferADC4, _sampleCycles, server.bufferProfile() + 34U, _nProfilePoints);
+  u8_compress_profile(_DMABufferADC4, _sampleCycles, server.bufferProfileData(), _nProfilePoints);
 }
 
 void PingSonar::updateEstimationsAverage()
