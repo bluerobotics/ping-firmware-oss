@@ -389,56 +389,47 @@ uint8_t SonarServer::transmitMeasurement(SonarMeasurementType type)
 
   PingSonar &sonar = PingSonar::GetInstance();
 
-  /** TODO: Change this to use ping1d_profile message as a buffer instead of direct byte addresing */
   switch (type) {
     case SonarMeasurementType::DISTANCE_SIMPLE: {
-      /** Message Size and ID */
-      reinterpret_cast<uint16_t&>(_BufferProfile[2]) = static_cast<uint16_t>(5);
-      reinterpret_cast<uint16_t&>(_BufferProfile[4]) = 1211;
-
-      /** Converts confidence to uint8_t */
-      _BufferProfile[11] = _BufferProfile[12];
-
-      /** Header size 8 + Payload Size 5 = 13 */
-      uint16_t check = computeCheckSum(_BufferProfile, 13U);
-      reinterpret_cast<uint16_t&>(_BufferProfile[13]) = static_cast<uint16_t>(check);
-
-      /** Trigger Transmission Header size 8 + Payload Size 5 + Checksum Size 2 = 15 */
-      _serverTxState = SonarServerTransmissionState::PROFILE_TX_STARTED;
-      HAL_UART_Transmit_DMA(&huart1, _BufferProfile, 15U);
-
-      /** Returns confidence to uint16_t */
-      _BufferProfile[12] = _BufferProfile[11];
-      _BufferProfile[11] = 0U;
+      static ping1d_distance_simple distance_simple;
+      distance_simple.set_source_device_id(sonar.deviceID());
+      distance_simple.set_destination_device_id(0);
+      distance_simple.set_distance(sonar.lockedDistance());
+      distance_simple.set_confidence(sonar.lockedConfidence());
+      distance_simple.updateChecksum();
+      HAL_UART_Transmit_DMA(&huart1, distance_simple.msgData, distance_simple.msgDataLength());
       break;
     }
     case SonarMeasurementType::DISTANCE: {
-      /** Message Size and ID */
-      reinterpret_cast<uint16_t&>(_BufferProfile[2]) = static_cast<uint16_t>(24);
-      reinterpret_cast<uint16_t&>(_BufferProfile[4]) = 1212;
-
-      /** Header size 8 + Payload Size 24 = 32 */
-      uint16_t check = computeCheckSum(_BufferProfile, 32U);
-      reinterpret_cast<uint16_t&>(_BufferProfile[32]) = static_cast<uint16_t>(check);
-
-      /** Trigger Transmission Header size 8 + Payload Size 24 + Checksum Size 2 = 34 */
-      _serverTxState = SonarServerTransmissionState::PROFILE_TX_STARTED;
-      HAL_UART_Transmit_DMA(&huart1, _BufferProfile, 34U);
+      static ping1d_distance distance;
+      distance.set_source_device_id(sonar.deviceID());
+      distance.set_destination_device_id(0);
+      distance.set_distance(sonar.lockedDistance());
+      distance.set_confidence(sonar.lockedConfidence());
+      distance.set_transmit_duration(sonar.transmitDuration());
+      distance.set_ping_number(sonar.pingNumber());
+      distance.set_scan_start(sonar.rangeScanStart());
+      distance.set_scan_length(sonar.rangeScanLength());
+      distance.set_gain_setting(sonar.gainSetting());
+      distance.updateChecksum();
+      HAL_UART_Transmit_DMA(&huart1, distance.msgData, distance.msgDataLength());
       break;
     }
     case SonarMeasurementType::PROFILE: {
-      uint16_t nPoints = sonar.nProfilePoints();
-
-      reinterpret_cast<uint16_t&>(_BufferProfile[2]) = static_cast<uint16_t>(26 + nPoints);
-      reinterpret_cast<uint16_t&>(_BufferProfile[4]) = 1300;
-
-      /** Header size 8 + Payload Size 26 + N points = 32 */
-      uint16_t check = computeCheckSum(_BufferProfile, 34U + nPoints);
-      reinterpret_cast<uint16_t&>(_BufferProfile[34U + nPoints]) = static_cast<uint16_t>(check);
-
-      /** Trigger Transmission Header size 8 + Payload Size 26 + N points + Checksum Size 2 = 36 + N points */
-      _serverTxState = SonarServerTransmissionState::PROFILE_TX_STARTED;
-      HAL_UART_Transmit_DMA(&huart1, _BufferProfile, 36U + nPoints);
+      ping1d_profile profile(_BufferProfile, sonar.nProfilePoints());
+      profile.set_source_device_id(sonar.deviceID());
+      profile.set_destination_device_id(0);
+      profile.set_distance(sonar.lockedDistance());
+      profile.set_confidence(sonar.lockedConfidence());
+      profile.set_transmit_duration(sonar.transmitDuration());
+      profile.set_ping_number(sonar.pingNumber());
+      profile.set_scan_start(sonar.rangeScanStart());
+      profile.set_scan_length(sonar.rangeScanLength());
+      profile.set_gain_setting(sonar.gainSetting());
+      profile.set_profile_data_length(sonar.nProfilePoints());
+      // Pointes are already filled by the sonar class using bufferProfileData
+      profile.updateChecksum();
+      HAL_UART_Transmit_DMA(&huart1, profile.msgData, profile.msgDataLength());
       break;
     }
     default:
