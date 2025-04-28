@@ -43,8 +43,6 @@ public:
   void update();
   uint8_t router(ping_message &msg);
 
-
-  void updateMeasurement();
   uint8_t transmitMeasurement(SonarMeasurementType type);
   uint8_t sendNackMessage(const char* message, uint16_t message_id);
 

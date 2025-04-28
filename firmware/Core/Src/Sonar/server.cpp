@@ -376,34 +376,6 @@ uint8_t SonarServer::router(ping_message &msg)
  */
 
 /**
- * @brief Updates the server auxiliary profile buffer with current Sonar device data from the scan.
- */
-void SonarServer::updateMeasurement()
-{
-  /** TODO: Change this to use ping1d_profile message as a buffer instead of direct byte addresing */
-  PingSonar &sonar = PingSonar::GetInstance();
-
-  _BufferProfile[0] = 'B';
-  _BufferProfile[1] = 'R';
-  _BufferProfile[6] = sonar.deviceID();
-  _BufferProfile[7] = 0;
-
-  /** Header Length 8 */
-  reinterpret_cast<uint32_t&>(_BufferProfile[8]) = sonar.lockedDistance();
-  reinterpret_cast<uint16_t&>(_BufferProfile[12]) = sonar.lockedConfidence();
-
-  /** Estimative Length 14 */
-  reinterpret_cast<uint16_t&>(_BufferProfile[14]) = sonar.transmitDuration();
-  reinterpret_cast<uint32_t&>(_BufferProfile[16]) = sonar.pingNumber();
-  reinterpret_cast<uint32_t&>(_BufferProfile[20]) = sonar.rangeScanStart();
-  reinterpret_cast<uint32_t&>(_BufferProfile[24]) = sonar.rangeScanLength();
-  reinterpret_cast<uint32_t&>(_BufferProfile[28]) = sonar.gainSetting();
-
-  /** Parameters Length 32 */
-  reinterpret_cast<uint16_t&>(_BufferProfile[32]) = sonar.nProfilePoints();
-}
-
-/**
  * @brief Transmits the sonar measurement stored in the auxiliary profile buffer.
  * @param type Final form to transmit the auxiliary profile.
  * @return Zero if the transmission was successful, otherwise the amount failed retries prior to this call.
