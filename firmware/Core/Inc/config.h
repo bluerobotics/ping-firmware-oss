@@ -36,7 +36,7 @@
  * @def PING_DEVICE_TYPE
  * @brief Defines the type of the Ping device.
  */
-#define PING_DEVICE_TYPE 9U
+#define PING_DEVICE_TYPE 1U
 
 /**
  * @def PING_DEVICE_MODEL
