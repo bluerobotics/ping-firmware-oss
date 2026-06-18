@@ -116,3 +116,6 @@ CMakeUserPresets.json
 
 # Build folders
 build/
+
+# Documentation and datasheets used during development phase
+references/
